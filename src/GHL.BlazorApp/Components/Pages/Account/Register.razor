@@ -1,0 +1,362 @@
+@page "/Account/Register"
+@using GHL.Domain.Entities
+@using Microsoft.AspNetCore.Identity
+@using Microsoft.AspNetCore.Components.Web
+@using GHL.BlazorApp.Components.Layout
+@using System.ComponentModel.DataAnnotations
+@layout AuthLayout
+@rendermode RenderMode.InteractiveServer
+@attribute [AllowAnonymous]
+@inject UserManager<ApplicationUser> UserManager
+@inject SignInManager<ApplicationUser> SignInManager
+@inject NavigationManager NavigationManager
+
+<!-- Title -->
+<PageTitle>Registro - GHL</PageTitle>
+
+<!-- Main Container -->
+<MudPaper Elevation="0" Class="register-card">
+    
+    <!-- Visual Header -->
+    <MudStack AlignItems="AlignItems.Center" Spacing="1" Class="mb-8">
+        <div class="lime-icon-box">
+            <MudIcon Icon="@Icons.Material.Outlined.PersonAdd" Class="header-icon" />
+        </div>
+        <MudText Typo="Typo.h5" Class="header-title">Crear Cuenta</MudText>
+        <MudText Typo="Typo.body2" Class="header-subtitle">Empieza a gestionar tu tiempo hoy</MudText>
+    </MudStack>
+    
+    <!-- Success/Error Feedback -->
+    @if (_errors.Any())
+    {
+        <MudAlert Severity="Severity.Error" Variant="Variant.Filled" Dense="true" Class="mb-4 rounded-alert">
+            @foreach (var error in _errors)
+            {
+                <div>@error</div>
+            }
+        </MudAlert>
+    }
+    
+    <!-- Registration Form -->
+    <EditForm Model="@Input" OnValidSubmit="RegisterUser" OnInvalidSubmit="HandleInvalidSubmit" Context="editContext" FormName="RegisterForm">
+        <DataAnnotationsValidator />
+        
+        <MudStack Spacing="3">
+            
+            <!-- Full Name -->
+            <div>
+                <MudText Typo="Typo.subtitle2" Style="font-weight: 600; color: #374151; margin-bottom: 4px; margin-left: 2px;">
+                    Nombre Completo <span style="color: #DC2626;">*</span>
+                </MudText>
+                <MudTextField @bind-Value="Input.FullName" 
+                              For="@(() => Input.FullName)"
+                              Placeholder="Ej. Juan Pérez"
+                              Variant="Variant.Outlined"
+                              Adornment="Adornment.Start"
+                              AdornmentIcon="@Icons.Material.Outlined.Person"
+                              AdornmentColor="Color.Default"
+                              Class="modern-input"
+                              Immediate="true" />
+            </div>
+
+            <!-- Email -->
+            <div>
+                <MudText Typo="Typo.subtitle2" Style="font-weight: 600; color: #374151; margin-bottom: 4px; margin-left: 2px;">
+                    Email <span style="color: #DC2626;">*</span>
+                </MudText>
+                <MudTextField @bind-Value="Input.Email" 
+                              For="@(() => Input.Email)"
+                              Placeholder="nombre@ejemplo.com"
+                              Variant="Variant.Outlined"
+                              InputType="InputType.Email"
+                              Adornment="Adornment.Start"
+                              AdornmentIcon="@Icons.Material.Outlined.Email"
+                              AdornmentColor="Color.Default"
+                              Class="modern-input"
+                              Immediate="true" />
+            </div>
+            
+            <!-- Password -->
+            <div>
+                <MudText Typo="Typo.subtitle2" Style="font-weight: 600; color: #374151; margin-bottom: 4px; margin-left: 2px;">
+                    Contraseña <span style="color: #DC2626;">*</span>
+                </MudText>
+                <MudTextField @bind-Value="Input.Password" 
+                              For="@(() => Input.Password)"
+                              Placeholder="••••••••"
+                              Variant="Variant.Outlined"
+                              InputType="@_passwordInputType"
+                              Adornment="Adornment.End"
+                              AdornmentIcon="@_passwordInputIcon"
+                              OnAdornmentClick="TogglePasswordVisibility"
+                              AdornmentColor="Color.Default"
+                              Class="modern-input"
+                              Immediate="true" />
+                
+                <!-- Password Requirements Checkmarks -->
+                <MudStack Spacing="0" Class="mt-2 ml-2">
+                    <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
+                        <MudIcon Icon="@(Input.Password?.Length >= 8 ? Icons.Material.Filled.CheckCircle : Icons.Material.Outlined.RadioButtonUnchecked)" 
+                                 Size="Size.Small" 
+                                 Style="@(Input.Password?.Length >= 8 ? "color:#C6FF00" : "color:#D1D5DB")" />
+                        <MudText Typo="Typo.caption" Style="@(Input.Password?.Length >= 8 ? "color:#374151" : "color:#9CA3AF")">Mínimo 8 caracteres</MudText>
+                    </MudStack>
+                    
+                    <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
+                        <MudIcon Icon="@(HasUpper(Input.Password) ? Icons.Material.Filled.CheckCircle : Icons.Material.Outlined.RadioButtonUnchecked)" 
+                                 Size="Size.Small" 
+                                 Style="@(HasUpper(Input.Password) ? "color:#C6FF00" : "color:#D1D5DB")" />
+                        <MudText Typo="Typo.caption" Style="@(HasUpper(Input.Password) ? "color:#374151" : "color:#9CA3AF")">Una mayúscula</MudText>
+                    </MudStack>
+
+                    <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
+                        <MudIcon Icon="@(HasLower(Input.Password) ? Icons.Material.Filled.CheckCircle : Icons.Material.Outlined.RadioButtonUnchecked)" 
+                                 Size="Size.Small" 
+                                 Style="@(HasLower(Input.Password) ? "color:#C6FF00" : "color:#D1D5DB")" />
+                        <MudText Typo="Typo.caption" Style="@(HasLower(Input.Password) ? "color:#374151" : "color:#9CA3AF")">Una minúscula</MudText>
+                    </MudStack>
+                    
+                    <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
+                        <MudIcon Icon="@(HasDigit(Input.Password) ? Icons.Material.Filled.CheckCircle : Icons.Material.Outlined.RadioButtonUnchecked)" 
+                                 Size="Size.Small" 
+                                 Style="@(HasDigit(Input.Password) ? "color:#C6FF00" : "color:#D1D5DB")" />
+                        <MudText Typo="Typo.caption" Style="@(HasDigit(Input.Password) ? "color:#374151" : "color:#9CA3AF")">Un número</MudText>
+                    </MudStack>
+                    
+                    <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
+                        <MudIcon Icon="@(HasSpecial(Input.Password) ? Icons.Material.Filled.CheckCircle : Icons.Material.Outlined.RadioButtonUnchecked)" 
+                                 Size="Size.Small" 
+                                 Style="@(HasSpecial(Input.Password) ? "color:#C6FF00" : "color:#D1D5DB")" />
+                        <MudText Typo="Typo.caption" Style="@(HasSpecial(Input.Password) ? "color:#374151" : "color:#9CA3AF")">Un caracter especial</MudText>
+                    </MudStack>
+                </MudStack>
+            </div>
+            
+            <!-- Confirm Password -->
+            <div>
+                <MudText Typo="Typo.subtitle2" Style="font-weight: 600; color: #374151; margin-bottom: 4px; margin-left: 2px;">
+                    Confirmar contraseña <span style="color: #DC2626;">*</span>
+                </MudText>
+                <MudTextField @bind-Value="Input.ConfirmPassword" 
+                              For="@(() => Input.ConfirmPassword)"
+                              Placeholder="••••••••"
+                              Variant="Variant.Outlined"
+                              InputType="@_passwordInputType"
+                              Adornment="Adornment.Start"
+                              AdornmentIcon="@Icons.Material.Outlined.Lock"
+                              AdornmentColor="Color.Default"
+                              Class="modern-input"
+                              Immediate="true" />
+            </div>
+            
+            <!-- Submit Button -->
+            <MudButton ButtonType="ButtonType.Submit" 
+                       Variant="Variant.Filled" 
+                       Class="submit-btn mt-2"
+                       FullWidth="true"
+                       Disabled="@_isLoading">
+                @if (_isLoading)
+                {
+                    <MudProgressCircular Size="Size.Small" Indeterminate="true" Class="mr-2 text-dark" />
+                }
+                Crear Cuenta
+            </MudButton>
+            
+        </MudStack>
+    </EditForm>
+    
+    <!-- Login Link -->
+    <MudStack Row="true" Justify="Justify.Center" Spacing="1" Class="mt-8">
+        <MudText Typo="Typo.body2" Class="text-gray">¿Ya tienes cuenta?</MudText>
+        <MudLink Href="/Account/Login" Class="link-lime">Iniciar Sesión</MudLink>
+    </MudStack>
+    
+</MudPaper>
+
+<!-- Embedded Styles for "Modern Lime" Vibe -->
+<style>
+    .register-card {
+        padding: 40px;
+        border-radius: 32px !important;
+        width: 100%;
+        max-width: 420px;
+        background: #FFFFFF;
+        box-shadow: 0px 4px 20px rgba(0,0,0,0.05);
+    }
+    
+    .lime-icon-box {
+        background: linear-gradient(135deg, #C6FF00 0%, #AEEA00 100%);
+        width: 64px;
+        height: 64px;
+        border-radius: 20px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-bottom: 16px;
+        box-shadow: 0 4px 12px rgba(198, 255, 0, 0.4);
+    }
+    
+    .header-icon {
+        color: #1F2937 !important;
+        font-size: 32px !important;
+    }
+    
+    .header-title {
+        font-weight: 800 !important;
+        color: #1F2937;
+        letter-spacing: -0.5px;
+    }
+    
+    .header-subtitle {
+        color: #9CA3AF;
+    }
+    
+    .modern-input .mud-input-control-input-container {
+        background-color: #F3F4F6 !important;
+        border-radius: 16px !important;
+        border: none !important;
+    }
+    
+    .modern-input .mud-input-outlined-border {
+        border: none !important;
+    }
+    
+    .submit-btn {
+        background: #C6FF00 !important;
+        color: #1F2937 !important;
+        border-radius: 16px !important;
+        height: 56px !important;
+        font-weight: 700 !important;
+        text-transform: none !important;
+        font-size: 1rem !important;
+        box-shadow: 0 4px 12px rgba(198, 255, 0, 0.3) !important;
+    }
+    
+    .submit-btn:hover {
+        background: #B2E600 !important;
+    }
+    
+    .text-dark { color: #1F2937 !important; }
+    .text-gray { color: #9CA3AF !important; }
+    .link-lime { 
+        color: #C6FF00 !important; 
+        font-weight: 700 !important; 
+        text-decoration: none !important; 
+    }
+    
+    .rounded-alert {
+        border-radius: 12px !important;
+    }
+</style>
+
+@code {
+    public RegisterModel Input { get; set; } = new();
+    private bool _isLoading = false;
+    private List<string> _errors = new();
+
+    // Password Visibility State
+    private bool _passwordVisibility;
+    private InputType _passwordInputType = InputType.Password;
+    private string _passwordInputIcon = Icons.Material.Filled.VisibilityOff;
+
+    private void TogglePasswordVisibility()
+    {
+        if (_passwordVisibility)
+        {
+            _passwordVisibility = false;
+            _passwordInputIcon = Icons.Material.Filled.VisibilityOff;
+            _passwordInputType = InputType.Password;
+        }
+        else
+        {
+            _passwordVisibility = true;
+            _passwordInputIcon = Icons.Material.Filled.Visibility;
+            _passwordInputType = InputType.Text;
+        }
+    }
+
+    private void HandleInvalidSubmit()
+    {
+        _errors.Clear();
+        _errors.Add("Por favor, completa todos los campos obligatorios.");
+    }
+    
+    private async Task RegisterUser()
+    {
+        _isLoading = true;
+        _errors.Clear();
+        
+        try
+        {
+            var user = new ApplicationUser
+            {
+                UserName = Input.Email,
+                Email = Input.Email,
+                FullName = Input.FullName,
+                CreatedAt = DateTime.UtcNow
+            };
+
+            var result = await UserManager.CreateAsync(user, Input.Password);
+
+            if (result.Succeeded)
+            {
+                // Redirect user to login page with success flag
+                NavigationManager.NavigateTo("/Account/Login?registered=true", forceLoad: true);
+            }
+            else
+            {
+                foreach (var error in result.Errors)
+                {
+                    _errors.Add(TranslateError(error));
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            _errors.Add($"Error inesperado: {ex.Message}");
+        }
+        finally
+        {
+            _isLoading = false;
+        }
+    }
+
+    private string TranslateError(IdentityError error)
+    {
+        return error.Code switch
+        {
+            "DuplicateEmail" => "Este correo ya está registrado.",
+            "PasswordTooShort" => "La contraseña debe tener al menos 8 caracteres.",
+            "PasswordRequiresDigit" => "La contraseña debe incluir al menos un número.",
+            "PasswordRequiresLower" => "La contraseña debe incluir al menos una minúscula.",
+            "PasswordRequiresUpper" => "La contraseña debe incluir al menos una mayúscula.",
+            "PasswordRequiresNonAlphanumeric" => "La contraseña debe incluir al menos un caracter especial (#,$,%,etc).",
+            _ => error.Description
+        };
+    }
+
+    // Input Model
+    public class RegisterModel
+    {
+        [Required(ErrorMessage = "El nombre es obligatorio")]
+        public string FullName { get; set; } = string.Empty;
+
+        [Required(ErrorMessage = "El email es obligatorio")]
+        [EmailAddress(ErrorMessage = "Formato de email inválido")]
+        public string Email { get; set; } = string.Empty;
+
+        [Required(ErrorMessage = "La contraseña es obligatoria")]
+        [StringLength(100, ErrorMessage = "La {0} debe tener al menos {2} caracteres.", MinimumLength = 8)]
+        [RegularExpression(@"^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[#$^+=!*()@%&]).{8,}$", ErrorMessage = "La contraseña no cumple los requisitos de seguridad.")]
+        public string Password { get; set; } = string.Empty;
+
+        [Compare(nameof(Password), ErrorMessage = "Las contraseñas no coinciden")]
+        public string ConfirmPassword { get; set; } = string.Empty;
+    }
+
+    // Helpers for cleaner UI logic
+    private bool HasUpper(string? p) => p?.Any(char.IsUpper) ?? false;
+    private bool HasLower(string? p) => p?.Any(char.IsLower) ?? false;
+    private bool HasDigit(string? p) => p?.Any(char.IsDigit) ?? false;
+    private bool HasSpecial(string? p) => p?.Any(ch => !char.IsLetterOrDigit(ch)) ?? false;
+}

@@ -1,0 +1,317 @@
+﻿@page "/"
+@using GHL.Application.DTOs
+@using GHL.Application.Interfaces
+@using System.Security.Claims
+@inject IWorkSessionService WorkSessionService
+@inject AuthenticationStateProvider AuthStateProvider
+@inject ISnackbar Snackbar
+@inject ILogger<Home> Logger
+
+
+<PageTitle>Dashboard - GHL Control de Horarios</PageTitle>
+
+<MudText Typo="Typo.h4" Style="font-weight: 700; color: #1C4532; margin-bottom: 8px;">Dashboard</MudText>
+<MudText Typo="Typo.body2" Style="color: #6B7280; margin-bottom: 24px;">Gestiona tus jornadas laborales con precisión.</MudText>
+
+@if (_isLoading)
+{
+    <MudProgressLinear Indeterminate="true" Color="Color.Primary" />
+}
+else
+{
+    <MudGrid Spacing="3">
+        <!-- Status Card -->
+        <MudItem xs="12" md="4">
+            <MudPaper Elevation="0" Style="padding: 24px; border-radius: 16px; border: 1px solid #E5E7EB;">
+                <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween">
+                    <MudStack Spacing="1">
+                        <MudText Typo="Typo.overline" Style="color: #6B7280;">ESTADO ACTUAL</MudText>
+                        <MudChip T="string" Style="@GetStatusChipStyle()" Size="Size.Small">
+                            @_currentSession.Status
+                        </MudChip>
+                    </MudStack>
+                    <MudIcon Icon="@GetStatusIcon()" Style="@($"{GetStatusIconStyle()} font-size: 48px;")" />
+                </MudStack>
+                
+                <MudDivider Style="margin: 16px 0;" />
+                
+                <MudStack Spacing="2">
+                    @if (_currentSession.Session is null)
+                    {
+                        <MudButton Variant="Variant.Filled" 
+                                   Style="background: linear-gradient(135deg, #1C4532 0%, #166534 100%); color: white; border-radius: 12px; height: 48px;"
+                                   FullWidth="true"
+                                   StartIcon="@Icons.Material.Filled.PlayArrow"
+                                   OnClick="@(async () => await ClockIn())"
+                                   Disabled="_isProcessing">
+                            Marcar Entrada
+                        </MudButton>
+                    }
+                    else if (_currentSession.Session.IsOnBreak)
+                    {
+                        <MudButton Variant="Variant.Filled" 
+                                   Style="background: linear-gradient(135deg, #F59E0B 0%, #D97706 100%); color: white; border-radius: 12px; height: 48px;"
+                                   FullWidth="true"
+                                   StartIcon="@Icons.Material.Filled.PlayArrow"
+                                   OnClick="@(async () => await EndBreak())"
+                                   Disabled="_isProcessing">
+                            Finalizar Pausa
+                        </MudButton>
+                    }
+                    else
+                    {
+                        <MudButton Variant="Variant.Filled" 
+                                   Style="background: linear-gradient(135deg, #EF4444 0%, #DC2626 100%); color: white; border-radius: 12px; height: 48px;"
+                                   FullWidth="true"
+                                   StartIcon="@Icons.Material.Filled.Stop"
+                                   OnClick="@(async () => await ClockOut())"
+                                   Disabled="_isProcessing">
+                            Marcar Salida
+                        </MudButton>
+                        <MudButton Variant="Variant.Outlined" 
+                                   Style="border-color: #F59E0B; color: #F59E0B; border-radius: 12px; height: 48px;"
+                                   FullWidth="true"
+                                   StartIcon="@Icons.Material.Filled.Pause"
+                                   OnClick="@(async () => await StartBreak())"
+                                   Disabled="_isProcessing">
+                            Iniciar Pausa
+                        </MudButton>
+                    }
+                </MudStack>
+            </MudPaper>
+        </MudItem>
+
+        <!-- Time Stats Cards -->
+        <MudItem xs="12" md="8">
+            <MudGrid Spacing="3">
+                <MudItem xs="6" md="6">
+                    <MudPaper Elevation="0" Style="padding: 20px; border-radius: 16px; background: linear-gradient(135deg, #1C4532 0%, #166534 100%); color: white; height: 100%; min-height: 140px; display: flex; flex-direction: column; justify-content: center; border: none;">
+                        <MudText Typo="Typo.overline" Style="color: #ffffff; opacity: 0.8;">TIEMPO TRABAJADO HOY</MudText>
+                        <MudText Typo="Typo.h2" Style="font-weight: 700; margin: 8px 0;">@_stats.FormattedTodayWorked</MudText>
+                        <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1">
+                            <MudIcon Icon="@Icons.Material.Filled.TrendingUp" Size="Size.Small" Style="color: #4ADE80;" />
+                            <MudText Typo="Typo.caption" Style="color: #4ADE80;">En tiempo real</MudText>
+                        </MudStack>
+                    </MudPaper>
+                </MudItem>
+                
+                <MudItem xs="6" md="6">
+                    @if (_stats.TodayBreakMinutes > 0)
+                    {
+                        <MudPaper Elevation="0" Style="padding: 20px; border-radius: 16px; background: linear-gradient(135deg, #D97706 0%, #B45309 100%); color: white; border: none; height: 100%; min-height: 140px; display: flex; flex-direction: column; justify-content: center;">
+                            <MudText Typo="Typo.overline" Style="color: #ffffff; opacity: 0.8;">TIEMPO EN PAUSAS</MudText>
+                            <MudText Typo="Typo.h2" Style="font-weight: 700; margin: 8px 0;">@_stats.FormattedTodayBreak</MudText>
+                            <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1">
+                                <MudIcon Icon="@Icons.Material.Filled.Coffee" Size="Size.Small" Style="color: #FDE68A;" />
+                                <MudText Typo="Typo.caption" Style="color: #FDE68A;">Descansos del día</MudText>
+                            </MudStack>
+                        </MudPaper>
+                    }
+                    else
+                    {
+                        <MudPaper Elevation="0" Style="padding: 20px; border-radius: 16px; background: linear-gradient(135deg, #374151 0%, #1F2937 100%); color: white; border: none; height: 100%; min-height: 140px; display: flex; flex-direction: column; justify-content: center;">
+                            <MudText Typo="Typo.overline" Style="color: #ffffff; opacity: 0.6;">TIEMPO EN PAUSAS</MudText>
+                            <MudText Typo="Typo.h2" Style="font-weight: 700; margin: 8px 0; opacity: 0.8;">@_stats.FormattedTodayBreak</MudText>
+                            <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1">
+                                <MudIcon Icon="@Icons.Material.Filled.Coffee" Size="Size.Small" Style="color: #9CA3AF;" />
+                                <MudText Typo="Typo.caption" Style="color: #9CA3AF;">Sin pausas hoy</MudText>
+                            </MudStack>
+                        </MudPaper>
+                    }
+                </MudItem>
+                
+                <MudItem xs="6" md="6">
+                    <MudPaper Elevation="0" Style="padding: 20px; border-radius: 16px; background: linear-gradient(135deg, #1E3A8A 0%, #172554 100%); color: white; border: none; height: 100%; min-height: 140px; display: flex; flex-direction: column; justify-content: center;">
+                        <MudText Typo="Typo.overline" Style="color: #ffffff; opacity: 0.8;">ESTA SEMANA</MudText>
+                        <MudText Typo="Typo.h2" Style="font-weight: 700; margin: 8px 0;">@_stats.FormattedWeekWorked</MudText>
+                        <MudText Typo="Typo.caption" Style="color: #93C5FD;">de 40h objetivo</MudText>
+                    </MudPaper>
+                </MudItem>
+                
+                <MudItem xs="6" md="6">
+                    <MudPaper Elevation="0" Style="padding: 20px; border-radius: 16px; background: linear-gradient(135deg, #4C1D95 0%, #2E1065 100%); color: white; border: none; height: 100%; min-height: 140px; display: flex; flex-direction: column; justify-content: center;">
+                        <MudText Typo="Typo.overline" Style="color: #ffffff; opacity: 0.8;">ESTE MES</MudText>
+                        <MudText Typo="Typo.h2" Style="font-weight: 700; margin: 8px 0;">@_stats.FormattedMonthWorked</MudText>
+                        <MudText Typo="Typo.caption" Style="color: #C4B5FD;">@_stats.DaysWorkedThisMonth días trabajados</MudText>
+                    </MudPaper>
+                </MudItem>
+            </MudGrid>
+        </MudItem>
+
+        <!-- Weekly Chart -->
+        <MudItem xs="12">
+            <MudPaper Elevation="0" Style="padding: 24px; border-radius: 16px; border: 1px solid #E5E7EB;">
+                <MudText Typo="Typo.h6" Style="font-weight: 600; color: #1C4532; margin-bottom: 16px;">Horas por día</MudText>
+                <MudStack Row="true" Justify="Justify.SpaceBetween" AlignItems="AlignItems.End" Style="height: 200px; padding: 0 16px;">
+                    @foreach (var day in _weeklyReport.DailyData)
+                    {
+                        <MudStack AlignItems="AlignItems.Center" Spacing="1" Style="flex: 1;">
+                            <div style="width: 100%; max-width: 48px; height: @(GetBarHeight(day.WorkedMinutes))px; 
+                                        background: linear-gradient(180deg, #4ADE80 0%, #1C4532 100%); 
+                                        border-radius: 8px 8px 0 0; min-height: 4px;"></div>
+                            <MudText Typo="Typo.caption" Style="color: #6B7280;">@day.DayName</MudText>
+                        </MudStack>
+                    }
+                </MudStack>
+            </MudPaper>
+        </MudItem>
+    </MudGrid>
+}
+
+@code {
+    private bool _isLoading = true;
+    private bool _isProcessing = false;
+    private string _userId = string.Empty;
+    
+    private CurrentSessionDto _currentSession = new();
+    private DashboardStatsDto _stats = new();
+    private WeeklyReportDto _weeklyReport = new() { DailyData = new List<DailyWorkDto>() };
+    
+    protected override async Task OnInitializedAsync()
+    {
+        var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+        _userId = authState.User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? string.Empty;
+        
+        if (!string.IsNullOrEmpty(_userId))
+        {
+            await LoadData();
+        }
+        else
+        {
+            _isLoading = false;
+        }
+    }
+    
+    private async Task LoadData()
+    {
+        _isLoading = true;
+        try
+        {
+            _currentSession = await WorkSessionService.GetCurrentSessionAsync(_userId);
+            _stats = await WorkSessionService.GetDashboardStatsAsync(_userId);
+            _weeklyReport = await WorkSessionService.GetWeeklyReportAsync(_userId);
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error loading dashboard data");
+            Console.WriteLine($"Error loading data: {ex.Message}");
+        }
+        finally
+        {
+            _isLoading = false;
+        }
+    }
+    
+    private async Task ClockIn()
+    {
+        _isProcessing = true;
+        try
+        {
+            await WorkSessionService.ClockInAsync(_userId);
+            await LoadData();
+            Snackbar.Add("¡Jornada iniciada!", Severity.Success);
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error executing ClockIn");
+            Snackbar.Add($"Error al marcar entrada: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            _isProcessing = false;
+            StateHasChanged();
+        }
+    }
+    
+    private async Task ClockOut()
+    {
+        _isProcessing = true;
+        try
+        {
+            await WorkSessionService.ClockOutAsync(_userId);
+            await LoadData();
+            Snackbar.Add("¡Jornada finalizada!", Severity.Success);
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error executing ClockOut");
+            Snackbar.Add($"Error al marcar salida: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            _isProcessing = false;
+            StateHasChanged();
+        }
+    }
+    
+    private async Task StartBreak()
+    {
+        _isProcessing = true;
+        try
+        {
+            await WorkSessionService.StartBreakAsync(_userId);
+            await LoadData();
+            Snackbar.Add("Pausa iniciada.", Severity.Info);
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error executing StartBreak");
+            Snackbar.Add($"Error al iniciar pausa: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            _isProcessing = false;
+            StateHasChanged();
+        }
+    }
+    
+    private async Task EndBreak()
+    {
+        _isProcessing = true;
+        try
+        {
+            await WorkSessionService.EndBreakAsync(_userId);
+            await LoadData();
+            Snackbar.Add("Pausa finalizada.", Severity.Success);
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error executing EndBreak");
+            Snackbar.Add($"Error al finalizar pausa: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            _isProcessing = false;
+            StateHasChanged();
+        }
+    }
+    
+    private string GetStatusChipStyle() => _currentSession.Status switch
+    {
+        "Trabajando" => "background: #DCFCE7; color: #166534;",
+        "En pausa" => "background: #FEF3C7; color: #92400E;",
+        _ => "background: #F3F4F6; color: #6B7280;"
+    };
+    
+    private string GetStatusIcon() => _currentSession.Status switch
+    {
+        "Trabajando" => Icons.Material.Filled.WorkOutline,
+        "En pausa" => Icons.Material.Filled.PauseCircle,
+        _ => Icons.Material.Filled.AccessTime
+    };
+    
+    private string GetStatusIconStyle() => _currentSession.Status switch
+    {
+        "Trabajando" => "color: #22C55E;",
+        "En pausa" => "color: #F59E0B;",
+        _ => "color: #9CA3AF;"
+    };
+    
+    private int GetBarHeight(int minutes)
+    {
+        var maxHeight = 150;
+        var maxMinutes = 600; // 10 hours
+        var height = (int)((double)minutes / maxMinutes * maxHeight);
+        return Math.Max(height, 4);
+    }
+}

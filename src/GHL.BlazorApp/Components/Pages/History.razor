@@ -1,0 +1,172 @@
+@page "/history"
+@using GHL.Application.DTOs
+@using GHL.Application.Interfaces
+@using System.Security.Claims
+@inject IWorkSessionService WorkSessionService
+@inject AuthenticationStateProvider AuthStateProvider
+@attribute [StreamRendering]
+
+<PageTitle>Historial - GHL Control de Horarios</PageTitle>
+
+<MudText Typo="Typo.h4" Style="font-weight: 700; color: #1C4532; margin-bottom: 8px;">Historial de Jornadas</MudText>
+<MudText Typo="Typo.body2" Style="color: #6B7280; margin-bottom: 24px;">Consulta todas tus jornadas laborales registradas.</MudText>
+
+<MudPaper Elevation="0" Style="padding: 24px; border-radius: 16px; border: 1px solid #E5E7EB; margin-bottom: 24px;">
+    <MudGrid Spacing="2">
+        <MudItem xs="12" md="4">
+            <MudDatePicker Label="Desde" @bind-Date="_startDate" Variant="Variant.Outlined" 
+                           Style="border-radius: 12px;" />
+        </MudItem>
+        <MudItem xs="12" md="4">
+            <MudDatePicker Label="Hasta" @bind-Date="_endDate" Variant="Variant.Outlined" />
+        </MudItem>
+        <MudItem xs="12" md="4" Style="display: flex; align-items: center;">
+            <MudButton Variant="Variant.Filled" 
+                       Style="background: #1C4532; color: white; border-radius: 12px; height: 48px;"
+                       StartIcon="@Icons.Material.Filled.Search"
+                       OnClick="LoadHistory">
+                Filtrar
+            </MudButton>
+        </MudItem>
+    </MudGrid>
+</MudPaper>
+
+@if (_isLoading)
+{
+    <MudProgressLinear Indeterminate="true" Color="Color.Primary" />
+}
+else
+{
+    <MudPaper Elevation="0" Style="border-radius: 16px; border: 1px solid #E5E7EB; overflow: hidden;">
+        <MudTable Items="_history.Sessions" Hover="true" Striped="true" Dense="false"
+                  Style="background: white;">
+            <HeaderContent>
+                <MudTh Style="font-weight: 600; color: #1C4532;">Fecha</MudTh>
+                <MudTh Style="font-weight: 600; color: #1C4532;">Entrada</MudTh>
+                <MudTh Style="font-weight: 600; color: #1C4532;">Salida</MudTh>
+                <MudTh Style="font-weight: 600; color: #1C4532;">Pausas</MudTh>
+                <MudTh Style="font-weight: 600; color: #1C4532;">Tiempo Trabajado</MudTh>
+                <MudTh Style="font-weight: 600; color: #1C4532;">Estado</MudTh>
+            </HeaderContent>
+            <RowTemplate>
+                <MudTd DataLabel="Fecha">
+                    <MudText Style="font-weight: 500;">@context.LocalClockIn.ToString("dd MMM yyyy")</MudText>
+                </MudTd>
+                <MudTd DataLabel="Entrada">
+                    <MudChip T="string" Size="Size.Small" Style="background: #DCFCE7; color: #166534;">
+                        @context.LocalClockIn.ToString("HH:mm")
+                    </MudChip>
+                </MudTd>
+                <MudTd DataLabel="Salida">
+                    @if (context.LocalClockOut.HasValue)
+                    {
+                        <MudChip T="string" Size="Size.Small" Style="background: #FEE2E2; color: #991B1B;">
+                            @context.LocalClockOut.Value.ToString("HH:mm")
+                        </MudChip>
+                    }
+                    else
+                    {
+                        <MudChip T="string" Size="Size.Small" Style="background: #FEF3C7; color: #92400E;">
+                            Activa
+                        </MudChip>
+                    }
+                </MudTd>
+                <MudTd DataLabel="Pausas">
+                    <MudText Style="color: #F59E0B;">@context.FormattedBreakTime</MudText>
+                </MudTd>
+                <MudTd DataLabel="Tiempo Trabajado">
+                    <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1">
+                        <MudIcon Icon="@Icons.Material.Filled.Schedule" Size="Size.Small" Style="color: #1C4532;" />
+                        <MudText Style="font-weight: 600; color: #1C4532;">@context.FormattedWorkedTime</MudText>
+                    </MudStack>
+                </MudTd>
+                <MudTd DataLabel="Estado">
+                    @if (context.IsActive)
+                    {
+                        <MudChip T="string" Size="Size.Small" Style="background: #DBEAFE; color: #1E40AF;">
+                            En curso
+                        </MudChip>
+                    }
+                    else
+                    {
+                        <MudChip T="string" Size="Size.Small" Style="background: #F3F4F6; color: #6B7280;">
+                            Completada
+                        </MudChip>
+                    }
+                </MudTd>
+            </RowTemplate>
+            <NoRecordsContent>
+                <MudStack AlignItems="AlignItems.Center" Style="padding: 48px;">
+                    <MudIcon Icon="@Icons.Material.Filled.EventBusy" Size="Size.Large" Style="color: #9CA3AF;" />
+                    <MudText Style="color: #6B7280;">No hay jornadas registradas en este período.</MudText>
+                </MudStack>
+            </NoRecordsContent>
+        </MudTable>
+        
+        @if (_history.TotalPages > 1)
+        {
+            <div style="padding: 16px; display: flex; justify-content: center;">
+                <MudPagination Count="@_history.TotalPages" 
+                              Selected="@_history.CurrentPage" 
+                              SelectedChanged="OnPageChanged"
+                              Color="Color.Primary" />
+            </div>
+        }
+    </MudPaper>
+}
+
+@code {
+    private bool _isLoading = true;
+    private DateTime? _startDate = DateTime.Today.AddDays(-30);
+    private DateTime? _endDate = DateTime.Today;
+    private int _currentPage = 1;
+    private string _userId = string.Empty;
+    
+    private SessionHistoryResponseDto _history = new();
+    
+    protected override async Task OnInitializedAsync()
+    {
+        var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+        _userId = authState.User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? string.Empty;
+        
+        if (!string.IsNullOrEmpty(_userId))
+        {
+            await LoadHistory();
+        }
+        else
+        {
+            _isLoading = false;
+        }
+    }
+    
+    private async Task LoadHistory()
+    {
+        _isLoading = true;
+        try
+        {
+            var request = new SessionHistoryRequestDto
+            {
+                StartDate = _startDate,
+                EndDate = _endDate?.AddDays(1),
+                PageNumber = _currentPage,
+                PageSize = 10
+            };
+            
+            _history = await WorkSessionService.GetHistoryAsync(_userId, request);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error loading history: {ex.Message}");
+        }
+        finally
+        {
+            _isLoading = false;
+        }
+    }
+    
+    private async Task OnPageChanged(int page)
+    {
+        _currentPage = page;
+        await LoadHistory();
+    }
+}

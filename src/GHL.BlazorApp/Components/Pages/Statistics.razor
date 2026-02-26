@@ -1,0 +1,162 @@
+@page "/statistics"
+@using GHL.Application.DTOs
+@using GHL.Application.Interfaces
+@using System.Security.Claims
+@inject IWorkSessionService WorkSessionService
+@inject AuthenticationStateProvider AuthStateProvider
+@attribute [StreamRendering]
+
+<PageTitle>Estadísticas - GHL Control de Horarios</PageTitle>
+
+<MudText Typo="Typo.h4" Style="font-weight: 700; color: #1C4532; margin-bottom: 8px;">Estadísticas</MudText>
+<MudText Typo="Typo.body2" Style="color: #6B7280; margin-bottom: 24px;">Analiza tu rendimiento laboral.</MudText>
+
+@if (_isLoading)
+{
+    <MudProgressLinear Indeterminate="true" Color="Color.Primary" />
+}
+else
+{
+    <MudGrid Spacing="3">
+        <!-- Summary Cards -->
+        <MudItem xs="6" md="3">
+            <MudPaper Elevation="0" Style="padding: 20px; border-radius: 16px; background: linear-gradient(135deg, #1C4532 0%, #166534 100%); color: white; border: none; height: 100%; min-height: 140px; display: flex; flex-direction: column; justify-content: center; text-align: center;">
+                <MudIcon Icon="@Icons.Material.Filled.Today" Size="Size.Large" Style="color: #4ADE80; margin: 0 auto;" />
+                <MudText Typo="Typo.h4" Style="font-weight: 700; margin: 8px 0;">@_stats.FormattedTodayWorked</MudText>
+                <MudText Typo="Typo.caption" Style="color: #4ADE80;">Hoy</MudText>
+            </MudPaper>
+        </MudItem>
+        
+        <MudItem xs="6" md="3">
+            <MudPaper Elevation="0" Style="padding: 20px; border-radius: 16px; background: linear-gradient(135deg, #1E3A8A 0%, #172554 100%); color: white; border: none; height: 100%; min-height: 140px; display: flex; flex-direction: column; justify-content: center; text-align: center;">
+                <MudIcon Icon="@Icons.Material.Filled.DateRange" Size="Size.Large" Style="color: #93C5FD; margin: 0 auto;" />
+                <MudText Typo="Typo.h4" Style="font-weight: 700; margin: 8px 0;">@_stats.FormattedWeekWorked</MudText>
+                <MudText Typo="Typo.caption" Style="color: #93C5FD;">Esta Semana</MudText>
+            </MudPaper>
+        </MudItem>
+        
+        <MudItem xs="6" md="3">
+            <MudPaper Elevation="0" Style="padding: 20px; border-radius: 16px; background: linear-gradient(135deg, #4C1D95 0%, #2E1065 100%); color: white; border: none; height: 100%; min-height: 140px; display: flex; flex-direction: column; justify-content: center; text-align: center;">
+                <MudIcon Icon="@Icons.Material.Filled.CalendarMonth" Size="Size.Large" Style="color: #C4B5FD; margin: 0 auto;" />
+                <MudText Typo="Typo.h4" Style="font-weight: 700; margin: 8px 0;">@_stats.FormattedMonthWorked</MudText>
+                <MudText Typo="Typo.caption" Style="color: #C4B5FD;">Este Mes</MudText>
+            </MudPaper>
+        </MudItem>
+        
+        <MudItem xs="6" md="3">
+            <MudPaper Elevation="0" Style="padding: 20px; border-radius: 16px; background: linear-gradient(135deg, #D97706 0%, #B45309 100%); color: white; border: none; height: 100%; min-height: 140px; display: flex; flex-direction: column; justify-content: center; text-align: center;">
+                <MudIcon Icon="@Icons.Material.Filled.TrendingUp" Size="Size.Large" Style="color: #FDE68A; margin: 0 auto;" />
+                <MudText Typo="Typo.h4" Style="font-weight: 700; margin: 8px 0;">@_stats.FormattedAverageDaily</MudText>
+                <MudText Typo="Typo.caption" Style="color: #FDE68A;">Promedio Diario</MudText>
+            </MudPaper>
+        </MudItem>
+
+        <!-- Weekly Chart -->
+        <MudItem xs="12" md="8">
+            <MudPaper Elevation="0" Style="padding: 24px; border-radius: 16px; border: 1px solid #E5E7EB;">
+                <MudText Typo="Typo.h6" Style="font-weight: 600; color: #1C4532; margin-bottom: 24px;">Horas Trabajadas por Día</MudText>
+                <MudStack Row="true" Justify="Justify.SpaceBetween" AlignItems="AlignItems.End" Style="height: 250px; padding: 0 16px;">
+                    @foreach (var day in _weeklyReport.DailyData)
+                    {
+                        <MudStack AlignItems="AlignItems.Center" Spacing="1" Style="flex: 1;">
+                            <MudText Typo="Typo.caption" Style="color: #1C4532; font-weight: 600;">@day.Hours h</MudText>
+                            <div style="width: 100%; max-width: 48px; height: @(GetBarHeight(day.WorkedMinutes))px; 
+                                        background: linear-gradient(180deg, #4ADE80 0%, #1C4532 100%); 
+                                        border-radius: 8px 8px 0 0; min-height: 8px;"></div>
+                            <MudText Typo="Typo.caption" Style="color: #6B7280;">@day.DayName</MudText>
+                        </MudStack>
+                    }
+                </MudStack>
+                <MudDivider Style="margin: 16px 0;" />
+                <MudStack Row="true" Justify="Justify.SpaceBetween">
+                    <MudText Typo="Typo.body2" Style="color: #6B7280;">Total de la semana</MudText>
+                    <MudText Typo="Typo.body2" Style="font-weight: 600; color: #1C4532;">@_weeklyReport.FormattedTotal</MudText>
+                </MudStack>
+            </MudPaper>
+        </MudItem>
+
+        <!-- Side Stats -->
+        <MudItem xs="12" md="4">
+            <MudPaper Elevation="0" Style="padding: 24px; border-radius: 16px; border: 1px solid #E5E7EB; height: 100%;">
+                <MudText Typo="Typo.h6" Style="font-weight: 600; color: #1C4532; margin-bottom: 24px;">Resumen del Mes</MudText>
+                
+                <MudStack Spacing="3">
+                    <div>
+                        <MudStack Row="true" Justify="Justify.SpaceBetween" Style="margin-bottom: 8px;">
+                            <MudText Typo="Typo.body2" Style="color: #6B7280;">Días Trabajados</MudText>
+                            <MudText Typo="Typo.body2" Style="font-weight: 600; color: #1C4532;">@_stats.DaysWorkedThisMonth</MudText>
+                        </MudStack>
+                        <MudProgressLinear Value="@((_stats.DaysWorkedThisMonth / 22.0) * 100)" Color="Color.Primary" Style="border-radius: 8px;" />
+                    </div>
+                    
+                    <div>
+                        <MudStack Row="true" Justify="Justify.SpaceBetween" Style="margin-bottom: 8px;">
+                            <MudText Typo="Typo.body2" Style="color: #6B7280;">Objetivo Mensual</MudText>
+                            <MudText Typo="Typo.body2" Style="font-weight: 600; color: #1C4532;">@GetMonthlyProgress()%</MudText>
+                        </MudStack>
+                        <MudProgressLinear Value="@GetMonthlyProgress()" Color="Color.Success" Style="border-radius: 8px;" />
+                    </div>
+                    
+                    <MudAlert Severity="Severity.Success" Variant="Variant.Outlined" Dense="true" Style="margin-top: 16px;">
+                        <MudText Typo="Typo.caption">¡Buen trabajo! Mantén el ritmo.</MudText>
+                    </MudAlert>
+                </MudStack>
+            </MudPaper>
+        </MudItem>
+    </MudGrid>
+}
+
+@code {
+    private bool _isLoading = true;
+    private string _userId = string.Empty;
+    
+    private DashboardStatsDto _stats = new();
+    private WeeklyReportDto _weeklyReport = new() { DailyData = new List<DailyWorkDto>() };
+    
+    protected override async Task OnInitializedAsync()
+    {
+        var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+        _userId = authState.User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? string.Empty;
+        
+        if (!string.IsNullOrEmpty(_userId))
+        {
+            await LoadData();
+        }
+        else
+        {
+            _isLoading = false;
+        }
+    }
+    
+    private async Task LoadData()
+    {
+        _isLoading = true;
+        try
+        {
+            _stats = await WorkSessionService.GetDashboardStatsAsync(_userId);
+            _weeklyReport = await WorkSessionService.GetWeeklyReportAsync(_userId);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error loading stats: {ex.Message}");
+        }
+        finally
+        {
+            _isLoading = false;
+        }
+    }
+    
+    private int GetBarHeight(int minutes)
+    {
+        var maxHeight = 180;
+        var maxMinutes = 600;
+        var height = (int)((double)minutes / maxMinutes * maxHeight);
+        return Math.Max(height, 8);
+    }
+    
+    private double GetMonthlyProgress()
+    {
+        var targetMinutes = 176 * 60; // 176 hours per month
+        return Math.Min(100, Math.Round((_stats.MonthWorkedMinutes / (double)targetMinutes) * 100, 0));
+    }
+}

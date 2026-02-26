@@ -1,0 +1,166 @@
+@page "/Account/Login"
+@using Microsoft.AspNetCore.Components.Web
+@using GHL.Domain.Entities
+@using Microsoft.AspNetCore.Identity
+@using GHL.BlazorApp.Components.Layout
+@layout AuthLayout
+@rendermode RenderMode.InteractiveServer
+@attribute [AllowAnonymous]
+@inject NavigationManager NavigationManager
+
+<PageTitle>Iniciar Sesión - GHL</PageTitle>
+
+<MudPaper Elevation="0" Style="padding: 40px; border-radius: 32px; width: 100%; max-width: 420px; background: #FFFFFF; box-shadow: 0px 4px 20px rgba(0,0,0,0.05);">
+    
+    <!-- Header -->
+    <MudStack AlignItems="AlignItems.Center" Spacing="1" Style="margin-bottom: 32px;">
+        <div style="background: linear-gradient(135deg, #C6FF00 0%, #AEEA00 100%); width: 64px; height: 64px; border-radius: 20px; display: flex; align-items: center; justify-content: center; margin-bottom: 16px; box-shadow: 0 4px 12px rgba(198, 255, 0, 0.4);">
+            <MudIcon Icon="@Icons.Material.Outlined.AccessTime" Style="color: #1F2937; font-size: 32px;" />
+        </div>
+        <MudText Typo="Typo.h5" Style="font-weight: 800; color: #1F2937; letter-spacing: -0.5px;">Bienvenido</MudText>
+        <MudText Typo="Typo.body2" Style="color: #9CA3AF;">Gestiona tu tiempo eficientemente</MudText>
+    </MudStack>
+    
+    <!-- Alerts -->
+    @if (!string.IsNullOrEmpty(_errorMessage))
+    {
+        <MudAlert Severity="Severity.Error" Variant="Variant.Filled" Style="margin-bottom: 24px; border-radius: 12px;">@_errorMessage</MudAlert>
+    }
+    
+    @if (_showSuccessMessage)
+    {
+        <MudAlert Severity="Severity.Success" Variant="Variant.Filled" Style="margin-bottom: 24px; border-radius: 12px;">
+            ¡Registro exitoso! Por favor inicia sesión.
+        </MudAlert>
+    }
+    
+    <!-- Actual Form Post to Controller -->
+    <!-- We use a standard form to POST to the controller, but style it with MudBlazor -->
+    <form action="/Account/PerformLogin" method="post">
+        <input type="hidden" name="returnUrl" value="@ReturnUrl" />
+        <MudStack Spacing="3">
+            
+            <!-- Email -->
+            <div>
+                <MudText Typo="Typo.subtitle2" Style="font-weight: 600; color: #374151; margin-bottom: 4px; margin-left: 2px;">
+                    Email <span style="color: #DC2626;">*</span>
+                </MudText>
+                <MudTextField T="string" 
+                              Name="email"
+                              Placeholder="nombre@ejemplo.com"
+                              InputType="InputType.Email"
+                              Variant="Variant.Outlined"
+                              Adornment="Adornment.Start"
+                              AdornmentIcon="@Icons.Material.Outlined.Email"
+                              AdornmentColor="Color.Default"
+                              Class="modern-input"
+                              Required="true" />
+            </div>
+            
+            <!-- Password -->
+            <div>
+                <MudText Typo="Typo.subtitle2" Style="font-weight: 600; color: #374151; margin-bottom: 4px; margin-left: 2px;">
+                    Contraseña <span style="color: #DC2626;">*</span>
+                </MudText>
+                <MudTextField T="string" 
+                              Name="password"
+                              Placeholder="••••••••"
+                              InputType="@_passwordInputType"
+                              Variant="Variant.Outlined"
+                              Adornment="Adornment.End"
+                              AdornmentIcon="@_passwordInputIcon"
+                              OnAdornmentClick="TogglePasswordVisibility"
+                              AdornmentColor="Color.Default"
+                              Class="modern-input"
+                              Required="true" />
+            </div>
+
+            <MudStack Row="true" Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center" Style="margin-top: 4px;">
+                <!-- Note: MudCheckBox requires careful handling in standard forms, using a standard input for robustness or ensuring MudCheckBox emits name -->
+               <div class="d-flex align-center">
+                   <input type="checkbox" name="rememberMe" value="true" id="rememberMe" style="width: 16px; height: 16px; accent-color: #C6FF00;" />
+                   <label for="rememberMe" style="margin-left: 8px; color: #374151; font-size: 0.875rem;">Recordarme</label>
+               </div>
+                
+                <MudLink Href="/Account/ForgotPassword" Style="color: #6B7280; font-size: 0.875rem; font-weight: 500;" Underline="Underline.Hover">¿Olvidaste?</MudLink>
+            </MudStack>
+            
+            <button type="submit" style="background: #C6FF00; color: #1F2937; border-radius: 16px; height: 56px; font-weight: 700; text-transform: none; font-size: 1rem; box-shadow: 0 4px 12px rgba(198, 255, 0, 0.3); margin-top: 16px; width: 100%; border: none; cursor: pointer;">
+                Iniciar Sesión
+            </button>
+            
+        </MudStack>
+    </form>
+    
+    <MudStack Row="true" Justify="Justify.Center" Spacing="1" Style="margin-top: 32px;">
+        <MudText Typo="Typo.body2" Style="color: #9CA3AF;">¿No tienes cuenta?</MudText>
+        <MudLink Href="/Account/Register" Style="color: #C6FF00; font-weight: 700; text-decoration: none;">Crear Cuenta</MudLink>
+    </MudStack>
+</MudPaper>
+
+<style>
+    .modern-input .mud-input-control-input-container {
+        background-color: #F3F4F6 !important;
+        border-radius: 16px !important;
+        border: none !important;
+    }
+    
+    .modern-input .mud-input-outlined-border {
+        border: none !important;
+    }
+</style>
+
+@code {
+    private bool _showSuccessMessage = false;
+    private string? _errorMessage;
+    
+    [SupplyParameterFromQuery]
+    public string? ReturnUrl { get; set; }
+    
+    [SupplyParameterFromQuery]
+    public string? Registered { get; set; }
+    
+    [SupplyParameterFromQuery(Name = "error")]
+    public string? ErrorParam { get; set; }
+
+    // Password Visibility Logic
+    private InputType _passwordInputType = InputType.Password;
+    private string _passwordInputIcon = Icons.Material.Filled.VisibilityOff;
+    private bool _passwordVisibility;
+
+    protected override void OnInitialized()
+    {
+        if (Registered == "true")
+        {
+            _showSuccessMessage = true;
+        }
+        
+        if (!string.IsNullOrEmpty(ErrorParam))
+        {
+            if (ErrorParam == "MissingFields")
+            {
+                _errorMessage = "Por favor, completa todos los campos obligatorios.";
+            }
+            else
+            {
+                _errorMessage = "Correo o contraseña incorrectos.";
+            }
+        }
+    }
+    
+    private void TogglePasswordVisibility()
+    {
+        if (_passwordVisibility)
+        {
+            _passwordVisibility = false;
+            _passwordInputIcon = Icons.Material.Filled.VisibilityOff;
+            _passwordInputType = InputType.Password;
+        }
+        else
+        {
+            _passwordVisibility = true;
+            _passwordInputIcon = Icons.Material.Filled.Visibility;
+            _passwordInputType = InputType.Text;
+        }
+    }
+}

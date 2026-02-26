@@ -1,0 +1,6 @@
+@GHL.WebApi_HostAddress = http://localhost:5208
+
+GET {{GHL.WebApi_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###

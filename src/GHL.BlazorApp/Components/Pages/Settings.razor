@@ -1,0 +1,118 @@
+@page "/settings"
+@attribute [StreamRendering]
+
+<PageTitle>Configuración - GHL Control de Horarios</PageTitle>
+
+<MudText Typo="Typo.h4" Style="font-weight: 700; color: #1C4532; margin-bottom: 8px;">Configuración</MudText>
+<MudText Typo="Typo.body2" Style="color: #6B7280; margin-bottom: 24px;">Personaliza tu experiencia en el sistema.</MudText>
+
+<MudGrid Spacing="3">
+    <!-- Profile Section -->
+    <MudItem xs="12" md="6">
+        <MudPaper Elevation="0" Style="padding: 24px; border-radius: 16px; border: 1px solid #E5E7EB;">
+            <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2" Style="margin-bottom: 24px;">
+                <MudIcon Icon="@Icons.Material.Filled.Person" Style="color: #1C4532;" />
+                <MudText Typo="Typo.h6" Style="font-weight: 600; color: #1C4532;">Perfil de Usuario</MudText>
+            </MudStack>
+            
+            <MudTextField @bind-Value="_fullName" 
+                          Label="Nombre Completo" 
+                          Variant="Variant.Outlined"
+                          Style="margin-bottom: 16px;" />
+            
+            <MudTextField @bind-Value="_email" 
+                          Label="Correo Electrónico" 
+                          Variant="Variant.Outlined"
+                          Disabled="true"
+                          Style="margin-bottom: 16px;" />
+            
+            <MudButton Variant="Variant.Filled" 
+                       Style="background: #1C4532; color: white; border-radius: 12px;"
+                       StartIcon="@Icons.Material.Filled.Save">
+                Guardar Cambios
+            </MudButton>
+        </MudPaper>
+    </MudItem>
+
+    <!-- Work Schedule Section -->
+    <MudItem xs="12" md="6">
+        <MudPaper Elevation="0" Style="padding: 24px; border-radius: 16px; border: 1px solid #E5E7EB;">
+            <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2" Style="margin-bottom: 24px;">
+                <MudIcon Icon="@Icons.Material.Filled.Schedule" Style="color: #1C4532;" />
+                <MudText Typo="Typo.h6" Style="font-weight: 600; color: #1C4532;">Horario Laboral</MudText>
+            </MudStack>
+            
+            <MudNumericField @bind-Value="_hoursPerDay" 
+                             Label="Horas por día objetivo" 
+                             Variant="Variant.Outlined"
+                             Min="1" Max="24"
+                             Style="margin-bottom: 16px;" />
+            
+            <MudNumericField @bind-Value="_hoursPerWeek" 
+                             Label="Horas por semana objetivo" 
+                             Variant="Variant.Outlined"
+                             Min="1" Max="168"
+                             Style="margin-bottom: 16px;" />
+            
+            <MudButton Variant="Variant.Filled" 
+                       Style="background: #1C4532; color: white; border-radius: 12px;"
+                       StartIcon="@Icons.Material.Filled.Save">
+                Guardar Horario
+            </MudButton>
+        </MudPaper>
+    </MudItem>
+
+    <!-- Notifications Section -->
+    <MudItem xs="12" md="6">
+        <MudPaper Elevation="0" Style="padding: 24px; border-radius: 16px; border: 1px solid #E5E7EB;">
+            <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2" Style="margin-bottom: 24px;">
+                <MudIcon Icon="@Icons.Material.Filled.Notifications" Style="color: #1C4532;" />
+                <MudText Typo="Typo.h6" Style="font-weight: 600; color: #1C4532;">Notificaciones</MudText>
+            </MudStack>
+            
+            <MudSwitch @bind-Value="_notifyBreakReminder" 
+                       Label="Recordatorio de pausas"
+                       Color="Color.Primary"
+                       Style="margin-bottom: 16px;" />
+            
+            <MudSwitch @bind-Value="_notifyEndOfDay" 
+                       Label="Recordatorio fin de jornada"
+                       Color="Color.Primary"
+                       Style="margin-bottom: 16px;" />
+            
+            <MudSwitch @bind-Value="_notifyWeeklyReport" 
+                       Label="Reporte semanal por email"
+                       Color="Color.Primary" />
+        </MudPaper>
+    </MudItem>
+
+    <!-- Danger Zone -->
+    <MudItem xs="12" md="6">
+        <MudPaper Elevation="0" Style="padding: 24px; border-radius: 16px; border: 1px solid #FEE2E2; background: #FEF2F2;">
+            <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2" Style="margin-bottom: 24px;">
+                <MudIcon Icon="@Icons.Material.Filled.Warning" Style="color: #DC2626;" />
+                <MudText Typo="Typo.h6" Style="font-weight: 600; color: #DC2626;">Zona de Peligro</MudText>
+            </MudStack>
+            
+            <MudText Typo="Typo.body2" Style="color: #6B7280; margin-bottom: 16px;">
+                Estas acciones son irreversibles. Procede con precaución.
+            </MudText>
+            
+            <MudButton Variant="Variant.Outlined" 
+                       Style="border-color: #DC2626; color: #DC2626; border-radius: 12px;"
+                       StartIcon="@Icons.Material.Filled.Delete">
+                Eliminar todos los registros
+            </MudButton>
+        </MudPaper>
+    </MudItem>
+</MudGrid>
+
+@code {
+    private string _fullName = "Usuario Demo";
+    private string _email = "demo@example.com";
+    private int _hoursPerDay = 8;
+    private int _hoursPerWeek = 40;
+    private bool _notifyBreakReminder = true;
+    private bool _notifyEndOfDay = true;
+    private bool _notifyWeeklyReport = false;
+}

@@ -1,0 +1,139 @@
+﻿@inherits LayoutComponentBase
+@using Microsoft.AspNetCore.Components.Authorization
+
+<MudThemeProvider Theme="_theme" IsDarkMode="false" />
+<MudSnackbarProvider />
+<MudDialogProvider />
+
+<AuthorizeView>
+    <Authorized>
+        <MudLayout>
+            <MudAppBar Elevation="0" Style="background: #ffffff; border-bottom: 1px solid #e0e0e0;">
+                <MudIconButton Icon="@Icons.Material.Filled.Menu" Color="Color.Inherit" Edge="Edge.Start" OnClick="@ToggleDrawer" Style="color: #1C4532;" />
+                <MudSpacer />
+                <MudText Typo="Typo.h6" Style="color: #1C4532; font-weight: 600;">@DateTime.Now.ToString("MMMM yyyy")</MudText>
+                <MudSpacer />
+                <MudIconButton Icon="@Icons.Material.Filled.Notifications" Style="color: #666;" />
+                
+                <!-- Explicit Logout for visibility -->
+                <MudIconButton Icon="@Icons.Material.Filled.Logout" Color="Color.Error" Href="/Account/PerformLogout" Title="Cerrar Sesión" />
+
+                <MudMenu AnchorOrigin="Origin.BottomRight" TransformOrigin="Origin.TopRight">
+                    <ActivatorContent>
+                        <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2" Style="cursor: pointer; margin-left: 8px;">
+                             <MudAvatar Color="Color.Primary" Size="Size.Small" Style="background: #1C4532;">
+                                @(context.User.FindFirst("FullName")?.Value?.Substring(0, 1).ToUpper() ?? context.User.Identity?.Name?.Substring(0, 1).ToUpper() ?? "U")
+                            </MudAvatar>
+                            <MudText Typo="Typo.body2" Style="color: #1C4532; font-weight: 600;">
+                                @(context.User.FindFirst("FullName")?.Value ?? context.User.Identity?.Name)
+                            </MudText>
+                            <MudIcon Icon="@Icons.Material.Filled.ArrowDropDown" Size="Size.Small" Color="Color.Default" />
+                        </MudStack>
+                    </ActivatorContent>
+                    <ChildContent>
+                        <MudMenuItem Icon="@Icons.Material.Filled.Person">Perfil</MudMenuItem>
+                        <MudDivider />
+                        <MudMenuItem Icon="@Icons.Material.Filled.Settings" Href="/settings">Configuración</MudMenuItem>
+                        <MudMenuItem Icon="@Icons.Material.Filled.Logout" Href="/Account/PerformLogout" Style="color: #DC2626;">Cerrar Sesión</MudMenuItem>
+                    </ChildContent>
+                </MudMenu>
+            </MudAppBar>
+
+            <MudDrawer @bind-Open="_drawerOpen" Elevation="1" Variant="DrawerVariant.Responsive" 
+                       Style="background: linear-gradient(180deg, #1C4532 0%, #0D2618 100%);">
+                <MudDrawerHeader Style="padding: 24px;">
+                    <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
+                        <MudIcon Icon="@Icons.Material.Filled.AccessTime" Style="color: #4ADE80; font-size: 28px;" />
+                        <MudText Typo="Typo.h6" Style="color: white; font-weight: 700;">GHL Control</MudText>
+                    </MudStack>
+                </MudDrawerHeader>
+
+                <MudNavMenu Style="padding: 0 12px;">
+                    <MudText Typo="Typo.overline" Style="color: #9CA3AF; padding: 16px 12px 8px; font-size: 11px;">MENU</MudText>
+                    
+                    <MudNavLink Href="/" Match="NavLinkMatch.All" 
+                                Icon="@Icons.Material.Filled.Dashboard"
+                                Style="color: white; border-radius: 8px; margin-bottom: 4px;"
+                                ActiveClass="mud-nav-link-active">
+                        Dashboard
+                    </MudNavLink>
+                    
+                    <MudNavLink Href="/statistics" 
+                                Icon="@Icons.Material.Filled.BarChart"
+                                Style="color: #9CA3AF; border-radius: 8px; margin-bottom: 4px;">
+                        Estadísticas
+                    </MudNavLink>
+                    
+                    <MudNavLink Href="/history" 
+                                Icon="@Icons.Material.Filled.History"
+                                Style="color: #9CA3AF; border-radius: 8px; margin-bottom: 4px;">
+                        Historial
+                    </MudNavLink>
+
+                    <MudText Typo="Typo.overline" Style="color: #9CA3AF; padding: 24px 12px 8px; font-size: 11px;">GENERAL</MudText>
+                    
+                    <MudNavLink Href="/settings" 
+                                Icon="@Icons.Material.Filled.Settings"
+                                Style="color: #9CA3AF; border-radius: 8px; margin-bottom: 4px;">
+                        Configuración
+                    </MudNavLink>
+                </MudNavMenu>
+
+                <MudSpacer />
+
+                <div style="padding: 16px; margin: 16px; background: linear-gradient(135deg, #4ADE80 0%, #22C55E 100%); border-radius: 16px;">
+                    <MudText Typo="Typo.subtitle1" Style="color: #0D2618; font-weight: 600;">
+                        Mejora tu productividad
+                    </MudText>
+                    <MudText Typo="Typo.body2" Style="color: #166534; margin-top: 8px;">
+                        Registra tus horas de trabajo con precisión.
+                    </MudText>
+                </div>
+            </MudDrawer>
+
+            <MudMainContent Style="background: #F8FAFC; min-height: 100vh; padding: 24px;">
+                @Body
+            </MudMainContent>
+        </MudLayout>
+    </Authorized>
+    <NotAuthorized>
+        <RedirectToLogin />
+    </NotAuthorized>
+</AuthorizeView>
+
+<style>
+    .mud-nav-link-active {
+        background: rgba(74, 222, 128, 0.15) !important;
+        color: #4ADE80 !important;
+    }
+    
+    .mud-nav-link:hover {
+        background: rgba(255, 255, 255, 0.1) !important;
+    }
+</style>
+
+@code {
+    private bool _drawerOpen = true;
+    
+    private MudTheme _theme = new MudTheme
+    {
+        Palette = new PaletteLight
+        {
+            Primary = "#1C4532",
+            Secondary = "#4ADE80",
+            Background = "#F8FAFC",
+            Surface = "#FFFFFF",
+            AppbarBackground = "#FFFFFF",
+            AppbarText = "#1C4532"
+        },
+        Typography = new Typography
+        {
+            Default = new Default
+            {
+                FontFamily = new[] { "Inter", "sans-serif" }
+            }
+        }
+    };
+
+    private void ToggleDrawer() => _drawerOpen = !_drawerOpen;
+}
