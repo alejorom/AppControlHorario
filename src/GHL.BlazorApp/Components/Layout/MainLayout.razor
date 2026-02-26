@@ -53,20 +53,22 @@
                     
                     <MudNavLink Href="/" Match="NavLinkMatch.All" 
                                 Icon="@Icons.Material.Filled.Dashboard"
-                                Style="color: white; border-radius: 8px; margin-bottom: 4px;"
+                                Style="color: white; margin-bottom: 4px;"
                                 ActiveClass="mud-nav-link-active">
                         Dashboard
                     </MudNavLink>
                     
                     <MudNavLink Href="/statistics" 
                                 Icon="@Icons.Material.Filled.BarChart"
-                                Style="color: #9CA3AF; border-radius: 8px; margin-bottom: 4px;">
+                                Style="color: #9CA3AF; margin-bottom: 4px;"
+                                ActiveClass="mud-nav-link-active">
                         Estadísticas
                     </MudNavLink>
                     
                     <MudNavLink Href="/history" 
                                 Icon="@Icons.Material.Filled.History"
-                                Style="color: #9CA3AF; border-radius: 8px; margin-bottom: 4px;">
+                                Style="color: #9CA3AF; margin-bottom: 4px;"
+                                ActiveClass="mud-nav-link-active">
                         Historial
                     </MudNavLink>
 
@@ -74,7 +76,8 @@
                     
                     <MudNavLink Href="/settings" 
                                 Icon="@Icons.Material.Filled.Settings"
-                                Style="color: #9CA3AF; border-radius: 8px; margin-bottom: 4px;">
+                                Style="color: #9CA3AF; margin-bottom: 4px;"
+                                ActiveClass="mud-nav-link-active">
                         Configuración
                     </MudNavLink>
                 </MudNavMenu>
@@ -103,12 +106,18 @@
 
 <style>
     .mud-nav-link-active {
-        background: rgba(74, 222, 128, 0.15) !important;
-        color: #4ADE80 !important;
+        background: transparent !important;
+        color: #B7F129 !important; /* Neon Green Siohioma highlight */
+        border-left: 4px solid #B7F129 !important;
+        padding-left: 12px !important; /* Adjust padding to offset the border visually */
+    }
+    
+    .mud-nav-link-active .mud-nav-link-icon.mud-nav-link-icon-default {
+        color: #B7F129 !important;
     }
     
     .mud-nav-link:hover {
-        background: rgba(255, 255, 255, 0.1) !important;
+        background: rgba(255, 255, 255, 0.05) !important;
     }
 </style>
 

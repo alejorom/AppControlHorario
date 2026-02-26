@@ -1,5 +1,7 @@
 @page "/settings"
 @attribute [StreamRendering]
+@using System.Security.Claims
+@inject AuthenticationStateProvider AuthStateProvider
 
 <PageTitle>Configuración - GHL Control de Horarios</PageTitle>
 
@@ -108,11 +110,25 @@
 </MudGrid>
 
 @code {
-    private string _fullName = "Usuario Demo";
-    private string _email = "demo@example.com";
+    private string _fullName = "";
+    private string _email = "";
     private int _hoursPerDay = 8;
     private int _hoursPerWeek = 40;
     private bool _notifyBreakReminder = true;
     private bool _notifyEndOfDay = true;
     private bool _notifyWeeklyReport = false;
+    
+    protected override async Task OnInitializedAsync()
+    {
+        var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+
+        if (user.Identity is not null && user.Identity.IsAuthenticated)
+        {
+            _email = user.FindFirst(ClaimTypes.Email)?.Value ?? "";
+            
+            // In CustomUserClaimsPrincipalFactory, we added "FullName" as a claim type
+            _fullName = user.FindFirst("FullName")?.Value ?? user.Identity.Name ?? "";
+        }
+    }
 }
