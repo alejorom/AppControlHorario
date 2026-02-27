@@ -38,4 +38,15 @@ public class AccountController : Controller
         await _signInManager.SignOutAsync();
         return Redirect("/");
     }
+
+    [HttpGet("RefreshProfile")]
+    public async Task<IActionResult> RefreshProfile([FromServices] UserManager<ApplicationUser> userManager)
+    {
+        var user = await userManager.GetUserAsync(User);
+        if (user != null)
+        {
+            await _signInManager.RefreshSignInAsync(user);
+        }
+        return Redirect("/settings?success=true");
+    }
 }
