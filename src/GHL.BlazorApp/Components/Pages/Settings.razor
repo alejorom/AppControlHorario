@@ -1,7 +1,14 @@
 @page "/settings"
 @attribute [StreamRendering]
 @using System.Security.Claims
+@using GHL.Domain.Entities
+@using Microsoft.AspNetCore.Identity
 @inject AuthenticationStateProvider AuthStateProvider
+@inject UserManager<ApplicationUser> UserManager
+@inject ISnackbar Snackbar
+@inject NavigationManager NavigationManager
+@inject IDialogService DialogService
+@inject IServiceScopeFactory ScopeFactory
 
 <PageTitle>Configuración - GHL Control de Horarios</PageTitle>
 
@@ -25,13 +32,69 @@
             <MudTextField @bind-Value="_email" 
                           Label="Correo Electrónico" 
                           Variant="Variant.Outlined"
-                          Disabled="true"
                           Style="margin-bottom: 16px;" />
             
             <MudButton Variant="Variant.Filled" 
                        Style="background: #1C4532; color: white; border-radius: 12px;"
-                       StartIcon="@Icons.Material.Filled.Save">
-                Guardar Cambios
+                       StartIcon="@Icons.Material.Filled.Save"
+                       OnClick="SaveProfileChangesAsync"
+                       Disabled="_isSaving">
+                @if (_isSaving)
+                {
+                    <MudProgressCircular Class="ms-n1" Size="Size.Small" Indeterminate="true"/>
+                    <MudText Class="ms-2">Guardando...</MudText>
+                }
+                else
+                {
+                    <MudText>Guardar Cambios</MudText>
+                }
+            </MudButton>
+        </MudPaper>
+    </MudItem>
+
+    <!-- Security Section -->
+    <MudItem xs="12" md="6">
+        <MudPaper Elevation="0" Style="padding: 24px; border-radius: 16px; border: 1px solid #E5E7EB;">
+            <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2" Style="margin-bottom: 24px;">
+                <MudIcon Icon="@Icons.Material.Filled.Security" Style="color: #1C4532;" />
+                <MudText Typo="Typo.h6" Style="font-weight: 600; color: #1C4532;">Seguridad</MudText>
+            </MudStack>
+            
+            <MudTextField @bind-Value="_currentPassword" 
+                          Label="Contraseña Actual" 
+                          Variant="Variant.Outlined"
+                          InputType="@_passwordInput"
+                          Adornment="Adornment.End"
+                          AdornmentIcon="@_passwordInputIcon"
+                          OnAdornmentClick="TogglePasswordVisibility"
+                          Style="margin-bottom: 16px;" />
+                          
+            <MudTextField @bind-Value="_newPassword" 
+                          Label="Nueva Contraseña" 
+                          Variant="Variant.Outlined"
+                          InputType="@_passwordInput"
+                          Style="margin-bottom: 16px;" />
+                          
+            <MudTextField @bind-Value="_confirmPassword" 
+                          Label="Confirmar Nueva Contraseña" 
+                          Variant="Variant.Outlined"
+                          InputType="@_passwordInput"
+                          Style="margin-bottom: 16px;" />
+            
+            <MudButton Variant="Variant.Filled" 
+                       Style="background: #1C4532; color: white; border-radius: 12px;"
+                       StartIcon="@Icons.Material.Filled.Lock"
+                       OnClick="ChangePasswordAsync"
+                       Disabled="_isChangingPassword">
+                @if (_isChangingPassword)
+                {
+                    <MudProgressCircular Class="ms-n1" Size="Size.Small" Indeterminate="true"/>
+                    <MudText Class="ms-2">Cambiando...</MudText>
+                }
+                else
+                {
+                    <MudText>Cambiar Contraseña</MudText>
+                }
             </MudButton>
         </MudPaper>
     </MudItem>
@@ -90,7 +153,7 @@
 
     <!-- Danger Zone -->
     <MudItem xs="12" md="6">
-        <MudPaper Elevation="0" Style="padding: 24px; border-radius: 16px; border: 1px solid #FEE2E2; background: #FEF2F2;">
+        <MudPaper Elevation="0" Style="padding: 24px; border-radius: 16px; border: 2px solid #FECACA; background: #FEF2F2;">
             <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2" Style="margin-bottom: 24px;">
                 <MudIcon Icon="@Icons.Material.Filled.Warning" Style="color: #DC2626;" />
                 <MudText Typo="Typo.h6" Style="font-weight: 600; color: #DC2626;">Zona de Peligro</MudText>
@@ -102,8 +165,18 @@
             
             <MudButton Variant="Variant.Outlined" 
                        Style="border-color: #DC2626; color: #DC2626; border-radius: 12px;"
-                       StartIcon="@Icons.Material.Filled.Delete">
-                Eliminar todos los registros
+                       StartIcon="@Icons.Material.Filled.Delete"
+                       OnClick="ConfirmDeleteAllRecordsAsync"
+                       Disabled="_isDeletingRecords">
+                @if (_isDeletingRecords)
+                {
+                    <MudProgressCircular Class="ms-n1" Size="Size.Small" Indeterminate="true" Color="Color.Error"/>
+                    <MudText Class="ms-2">Eliminando...</MudText>
+                }
+                else
+                {
+                    <MudText>ELIMINAR TODOS LOS REGISTROS</MudText>
+                }
             </MudButton>
         </MudPaper>
     </MudItem>
@@ -112,23 +185,203 @@
 @code {
     private string _fullName = "";
     private string _email = "";
+    private string _currentPassword = "";
+    private string _newPassword = "";
+    private string _confirmPassword = "";
+    
+    // UI states
+    private bool _isShowPassword;
+    private InputType _passwordInput = InputType.Password;
+    private string _passwordInputIcon = Icons.Material.Filled.VisibilityOff;
+    
     private int _hoursPerDay = 8;
     private int _hoursPerWeek = 40;
     private bool _notifyBreakReminder = true;
     private bool _notifyEndOfDay = true;
     private bool _notifyWeeklyReport = false;
     
+    private bool _isSaving = false;
+    private bool _isChangingPassword = false;
+    private bool _isDeletingRecords = false;
+    private ApplicationUser? _currentUser;
+    
+    [SupplyParameterFromQuery]
+    public bool? Success { get; set; }
+    
     protected override async Task OnInitializedAsync()
     {
+        if (Success == true)
+        {
+            Snackbar.Add("Perfil actualizado correctamente.", Severity.Success);
+        }
+
         var authState = await AuthStateProvider.GetAuthenticationStateAsync();
         var user = authState.User;
 
         if (user.Identity is not null && user.Identity.IsAuthenticated)
         {
-            _email = user.FindFirst(ClaimTypes.Email)?.Value ?? "";
+            _currentUser = await UserManager.GetUserAsync(user);
             
-            // In CustomUserClaimsPrincipalFactory, we added "FullName" as a claim type
-            _fullName = user.FindFirst("FullName")?.Value ?? user.Identity.Name ?? "";
+            if (_currentUser is not null)
+            {
+                _email = _currentUser.Email ?? "";
+                _fullName = _currentUser.FullName ?? "";
+            }
+        }
+    }
+    
+    private async Task SaveProfileChangesAsync()
+    {
+        if (_currentUser is null) return;
+        
+        if (string.IsNullOrWhiteSpace(_fullName) || string.IsNullOrWhiteSpace(_email))
+        {
+            Snackbar.Add("El nombre y el correo son obligatorios.", Severity.Warning);
+            return;
+        }
+
+        _isSaving = true;
+        try
+        {
+            _currentUser.FullName = _fullName;
+            var updateResult = await UserManager.UpdateAsync(_currentUser);
+            
+            if (!updateResult.Succeeded)
+            {
+                Snackbar.Add("Error al actualizar el nombre.", Severity.Error);
+                return;
+            }
+
+            if (_email != _currentUser.Email)
+            {
+                var token = await UserManager.GenerateChangeEmailTokenAsync(_currentUser, _email);
+                var emailResult = await UserManager.ChangeEmailAsync(_currentUser, _email, token);
+                
+                if (emailResult.Succeeded)
+                {
+                    // Update UserName as well to keep them in sync
+                    await UserManager.SetUserNameAsync(_currentUser, _email);
+                }
+                else
+                {
+                    Snackbar.Add($"Error al actualizar el correo: {string.Join(", ", emailResult.Errors.Select(e => e.Description))}", Severity.Error);
+                    return;
+                }
+            }
+
+            NavigationManager.NavigateTo("/Account/RefreshProfile", forceLoad: true);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Ocurrió un error inesperado al guardar: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            _isSaving = false;
+        }
+    }
+
+    private void TogglePasswordVisibility()
+    {
+        if (_isShowPassword)
+        {
+            _isShowPassword = false;
+            _passwordInputIcon = Icons.Material.Filled.VisibilityOff;
+            _passwordInput = InputType.Password;
+        }
+        else
+        {
+            _isShowPassword = true;
+            _passwordInputIcon = Icons.Material.Filled.Visibility;
+            _passwordInput = InputType.Text;
+        }
+    }
+
+    private async Task ChangePasswordAsync()
+    {
+        if (_currentUser is null) return;
+        
+        if (string.IsNullOrWhiteSpace(_currentPassword) || string.IsNullOrWhiteSpace(_newPassword))
+        {
+            Snackbar.Add("Debes ingresar tu contraseña actual y la nueva.", Severity.Warning);
+            return;
+        }
+        
+        if (_newPassword != _confirmPassword)
+        {
+            Snackbar.Add("La nueva contraseña y la confirmación no coinciden.", Severity.Error);
+            return;
+        }
+
+        _isChangingPassword = true;
+        try
+        {
+            var result = await UserManager.ChangePasswordAsync(_currentUser, _currentPassword, _newPassword);
+            
+            if (result.Succeeded)
+            {
+                // Clear fields
+                _currentPassword = "";
+                _newPassword = "";
+                _confirmPassword = "";
+                Snackbar.Add("Contraseña cambiada exitosamente.", Severity.Success);
+            }
+            else
+            {
+                Snackbar.Add($"Error: {string.Join(", ", result.Errors.Select(e => e.Description))}", Severity.Error);
+            }
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Error inesperado: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            _isChangingPassword = false;
+        }
+    }
+
+    private async Task ConfirmDeleteAllRecordsAsync()
+    {
+        if (_currentUser is null) return;
+
+        bool? result = await DialogService.ShowMessageBox(
+            "⚠️ ¡PELIGRO!",
+            "¿Estás absolutamente seguro de que deseas eliminar TODOS tus registros de tiempo? Esta acción no se puede deshacer y perderás todo tu historial laboral.",
+            yesText: "Sí, Eliminar Todo", cancelText: "Cancelar");
+
+        if (result == true)
+        {
+            _isDeletingRecords = true;
+            try
+            {
+                using var scope = ScopeFactory.CreateScope();
+                var context = scope.ServiceProvider.GetRequiredService<GHL.Infrastructure.Data.GHLDbContext>();
+                
+                // Get all sessions for this user
+                var sessions = context.WorkSessions.Where(s => s.UserId == _currentUser.Id).ToList();
+                
+                if (sessions.Any())
+                {
+                    // EF Core handles cascading deletes if configured, or manual loop
+                    context.WorkSessions.RemoveRange(sessions);
+                    await context.SaveChangesAsync();
+                    
+                    Snackbar.Add($"Se han eliminado {sessions.Count} jornadas y sus pausas exitosamente.", Severity.Success);
+                }
+                else
+                {
+                    Snackbar.Add("No hay registros para eliminar.", Severity.Info);
+                }
+            }
+            catch (Exception ex)
+            {
+                Snackbar.Add($"Error crítico al intentar eliminar datos: {ex.Message}", Severity.Error);
+            }
+            finally
+            {
+                _isDeletingRecords = false;
+            }
         }
     }
 }
