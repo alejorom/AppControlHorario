@@ -44,4 +44,5 @@ public record DailyWorkDto
     public int WorkedMinutes { get; init; }
     public string DayName { get; init; } = string.Empty;
     public double Hours => Math.Round(WorkedMinutes / 60.0, 1);
+    public string FormattedWorkedTime => $"{WorkedMinutes / 60}h {WorkedMinutes % 60}m";
 }

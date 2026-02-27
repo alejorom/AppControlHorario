@@ -60,9 +60,11 @@ else
                     {
                         <MudStack AlignItems="AlignItems.Center" Spacing="1" Style="flex: 1;">
                             <MudText Typo="Typo.caption" Style="color: #1C4532; font-weight: 600;">@day.Hours h</MudText>
-                            <div style="width: 100%; max-width: 48px; height: @(GetBarHeight(day.WorkedMinutes))px; 
-                                        background: linear-gradient(180deg, #4ADE80 0%, #1C4532 100%); 
-                                        border-radius: 8px 8px 0 0; min-height: 8px;"></div>
+                            <MudTooltip Text="@day.FormattedWorkedTime" Placement="Placement.Top" Arrow="true" Color="Color.Dark" Style="width: 100%; max-width: 48px; display: flex; justify-content: center;">
+                                <div style="width: 48px; max-width: 100%; height: @(GetBarHeight(day.WorkedMinutes))px; 
+                                            background: linear-gradient(180deg, #4ADE80 0%, #1C4532 100%); 
+                                            border-radius: 8px 8px 0 0; min-height: 8px; cursor: pointer; margin: 0 auto;"></div>
+                            </MudTooltip>
                             <MudText Typo="Typo.caption" Style="color: #6B7280;">@day.DayName</MudText>
                         </MudStack>
                     }
