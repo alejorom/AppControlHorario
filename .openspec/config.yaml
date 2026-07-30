@@ -1,0 +1,24 @@
+# Configuración del proyecto OpenSpec
+schema: spec-driven
+project:
+  name: sistema-horarios-laborales
+  description: >
+    Aplicación web para control y gestión de horarios laborales:
+    registro de entradas/salidas, gestión de pausas y reportes de tiempo trabajado.
+  stack:
+    frontend: React / Next.js
+    styling: Tailwind CSS
+    charts: Recharts
+    backend: Supabase (PostgreSQL, Auth, Storage)
+
+capabilities:
+  - autenticacion
+  - registro-jornadas
+  - calculos-automaticos
+  - reportes
+  - perfil-usuario
+
+conventions:
+  language: es
+  requirement_keyword: DEBE
+  scenario_format: gherkin
