@@ -1,24 +1,61 @@
-# Configuración del proyecto OpenSpec
 schema: spec-driven
-project:
-  name: sistema-horarios-laborales
-  description: >
-    Aplicación web para control y gestión de horarios laborales:
-    registro de entradas/salidas, gestión de pausas y reportes de tiempo trabajado.
-  stack:
-    frontend: React / Next.js
-    styling: Tailwind CSS
-    charts: Recharts
-    backend: Supabase (PostgreSQL, Auth, Storage)
 
-capabilities:
-  - autenticacion
-  - registro-jornadas
-  - calculos-automaticos
-  - reportes
-  - perfil-usuario
+# Contexto del proyecto: solo restricciones que un agente no puede inferir leyendo el código.
+context: |
+  Aplicación web de control de horarios laborales (registro de entradas/salidas,
+  pausas y reportes de tiempo trabajado).
+  Stack: .NET (ASP.NET Core) con Blazor como interfaz, Entity Framework Core como
+  acceso a datos y SQL Server como base de datos. La autenticación usa ASP.NET Core
+  Identity sobre la misma base de datos. No introducir otro motor de base de datos o
+  proveedor de autenticación sin un proposal explícito.
+  Arquitectura en capas (solución GHL): GHL.Domain, GHL.Application, GHL.Infrastructure,
+  GHL.WebApi y GHL.BlazorApp. Las dependencias apuntan hacia adentro: Domain no
+  referencia ningún otro proyecto, Application solo depende de Domain, e Infrastructure
+  implementa las interfaces definidas en Domain/Application. La lógica de negocio
+  (cálculo de horas, reglas de jornada y pausas) vive en Application/Domain, nunca en
+  componentes Blazor ni en controllers.
+  Escribe specs, proposals, design y tasks en español; el código (variables, funciones,
+  comentarios técnicos) en inglés.
+  Aislamiento por usuario: cada usuario solo accede a sus propios registros. Toda
+  consulta de jornadas, pausas y perfiles debe filtrar por el usuario autenticado en la
+  capa Application (por ejemplo con global query filters de EF Core); nunca confiar en
+  que la interfaz oculte datos de otros usuarios.
+  Las credenciales y cadenas de conexión no se guardan en el repositorio (User Secrets o
+  variables de entorno).
+  Todos los timestamps se almacenan en UTC (datetime2 o datetimeoffset); la conversión
+  a hora local ocurre solo en la UI.
+  Las horas trabajadas se calculan siempre como (salida - entrada) - total de pausas.
+  La interfaz Blazor debe ser responsive (320px a 2560px) y cumplir WCAG 2.1 AA.
+  Orden de dependencia entre capabilities: autenticacion -> registro-jornadas ->
+  calculos-automaticos -> reportes; perfil-usuario depende solo de autenticacion.
+  Fuera de alcance por ahora: vista de administrador o equipos, modo offline/PWA,
+  integraciones con nómina o RRHH, notificaciones push.
 
-conventions:
-  language: es
-  requirement_keyword: DEBE
-  scenario_format: gherkin
+# Reglas por artefacto
+rules:
+  proposal:
+    - Indicar qué capabilities del orden de dependencia se ven afectadas
+    - Declarar siempre qué queda fuera de alcance
+  specs:
+    - Cada requirement debe usar SHALL o MUST y tener al menos un scenario con WHEN/THEN
+    - Los scenarios deben cubrir al menos un caso de error además del caso feliz
+  design:
+    - Verificar que el diseño respete las capas de la solución y que las dependencias apunten hacia adentro
+    - Indicar qué lógica va en Domain/Application y qué queda en la capa de presentación
+  tasks:
+    - Dividir en tareas de máximo 2 horas
+    - Incluir una tarea de verificación por cada scenario del spec
+
+# Guía por operación
+operations:
+  apply:
+    guidance:
+      - No implementar comportamiento que no esté cubierto por un requirement y un scenario
+      - Toda consulta a datos de usuario debe filtrar por el usuario autenticado en Application
+      - Todo cambio de esquema debe hacerse con una migración de EF Core
+      - No colocar lógica de negocio en componentes Blazor ni en controllers
+      - No escribir código que no corresponda a una tarea del tasks.md del change activo; si surge trabajo nuevo, detenerse y actualizar el change
+      - Aplicar los principios de código de AGENTS.md (separación de responsabilidades, early return, errores nunca silenciados, componentes con estados Loading/Error/Empty)
+  archive:
+    guidance:
+      - Resumir el resultado del archivado antes de terminar

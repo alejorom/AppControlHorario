@@ -1,18 +1,16 @@
-# Capability: Autenticación
+# Autenticación
 
 ## Purpose
-Gestionar el registro, inicio de sesión, recuperación de contraseña y cierre de sesión
-de los usuarios, utilizando Supabase Auth como proveedor de identidad.
+Gestionar el registro, inicio de sesión, recuperación de contraseña y cierre de sesión de los usuarios de la aplicación de control de horarios, a través de un único sistema de identidad. Esta capability es la base del sistema: ninguna otra capability puede operar sin un usuario autenticado.
 
-## ADDED Requirements
+## Requirements
 
 ### Requirement: Registro de Usuario
-El sistema DEBE permitir a nuevos usuarios crear una cuenta mediante email y contraseña,
-usando Supabase Auth.
+El sistema SHALL permitir a nuevos usuarios crear una cuenta mediante email y contraseña.
 
 #### Scenario: Registro exitoso
 - **WHEN** un usuario envía el formulario de registro con un email no existente y una contraseña de al menos 8 caracteres
-- **THEN** el sistema crea la cuenta en Supabase Auth
+- **THEN** el sistema crea la cuenta del usuario
 - **AND** el sistema envía un correo de verificación
 - **AND** el usuario no puede iniciar sesión hasta confirmar su email
 
@@ -26,11 +24,8 @@ usando Supabase Auth.
 - **THEN** el sistema rechaza el registro
 - **AND** muestra un mensaje indicando el requisito mínimo
 
----
-
 ### Requirement: Inicio de Sesión
-El sistema DEBE permitir a usuarios registrados autenticarse con email y contraseña
-contra Supabase Auth.
+El sistema SHALL permitir a usuarios registrados autenticarse con email y contraseña.
 
 #### Scenario: Login exitoso
 - **WHEN** un usuario envía credenciales válidas y su email está verificado
@@ -38,7 +33,7 @@ contra Supabase Auth.
 - **AND** redirige al dashboard principal
 
 #### Scenario: Credenciales incorrectas
-- **WHEN** un usuario envía un email o contraseña incorrectos
+- **WHEN** un usuario envía un email o una contraseña incorrectos
 - **THEN** el sistema rechaza el acceso
 - **AND** muestra un mensaje de error genérico sin especificar cuál campo falló
 
@@ -47,11 +42,8 @@ contra Supabase Auth.
 - **THEN** el sistema rechaza el acceso
 - **AND** ofrece reenviar el correo de verificación
 
----
-
 ### Requirement: Recuperación de Contraseña
-El sistema DEBE permitir a un usuario restablecer su contraseña mediante un enlace
-enviado por correo, válido por 24 horas.
+El sistema SHALL permitir a un usuario restablecer su contraseña mediante un enlace enviado por correo y válido por 24 horas.
 
 #### Scenario: Solicitud de recuperación
 - **WHEN** un usuario solicita recuperar su contraseña ingresando su email
@@ -63,10 +55,8 @@ enviado por correo, válido por 24 horas.
 - **THEN** el sistema rechaza la solicitud
 - **AND** ofrece generar un nuevo enlace
 
----
-
 ### Requirement: Cierre de Sesión
-El sistema DEBE permitir a un usuario autenticado cerrar su sesión de forma segura.
+El sistema SHALL permitir a un usuario autenticado cerrar su sesión de forma segura.
 
 #### Scenario: Logout exitoso
 - **WHEN** un usuario autenticado hace clic en "Cerrar sesión"

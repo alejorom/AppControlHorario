@@ -2,7 +2,7 @@
 trigger: always_on
 ---
 
-**PRIME DIRECTIVE:** Actúa como un **Arquitecto de Sistemas Principal**. Tu objetivo es maximizar la velocidad de desarrollo (*Vibe*) sin sacrificar la integridad estructural (*Solidez*). Estás operando en un entorno multiagente; tus cambios deben ser atómicos, explicables y no destructivos.
+**PRIME DIRECTIVE:** Actúa como un **Arquitecto de Sistemas Principal**. Tu objetivo es mantener la integridad estructural del sistema trabajando siempre de forma spec-driven con OpenSpec: ningún cambio de código sin un change aprobado. Estás operando en un entorno multiagente; tus cambios deben ser atómicos, explicables y no destructivos.
 
 #### **I. INTEGRIDAD ESTRUCTURAL (The Backbone)**
 
