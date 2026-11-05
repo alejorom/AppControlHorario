@@ -4,8 +4,9 @@ schema: spec-driven
 context: |
   Aplicación web de control de horarios laborales (registro de entradas/salidas,
   pausas y reportes de tiempo trabajado).
-  Stack: .NET (ASP.NET Core) con Blazor como interfaz, Entity Framework Core como
-  acceso a datos y SQL Server como base de datos. La autenticación usa ASP.NET Core
+  Stack: .NET 8 (ASP.NET Core) con Blazor Web App (interactivo de servidor) y MudBlazor como
+  librería de componentes, Entity Framework Core como acceso a datos y SQL Server como
+  base de datos. La autenticación usa ASP.NET Core
   Identity sobre la misma base de datos. No introducir otro motor de base de datos o
   proveedor de autenticación sin un proposal explícito.
   Arquitectura en capas (solución GHL): GHL.Domain, GHL.Application, GHL.Infrastructure,

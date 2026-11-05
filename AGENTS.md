@@ -17,7 +17,7 @@ Todo el desarrollo de este proyecto es spec-driven. No se hace desarrollo improv
 
 Solución en `src/` con Clean Architecture. Las dependencias apuntan hacia adentro:
 
-- `GHL.Domain`: entidades e interfaces del dominio. No referencia ningún otro proyecto.
+- `GHL.Domain`: entidades e interfaces del dominio. No referencia ningún otro proyecto. Excepción documentada: referencia `Microsoft.Extensions.Identity.Stores` porque `ApplicationUser` hereda de `IdentityUser`. No agregar otras dependencias.
 - `GHL.Application`: casos de uso, DTOs, interfaces y servicios. Solo depende de Domain.
 - `GHL.Infrastructure`: EF Core, repositorios, migraciones. Implementa las interfaces de Domain y Application.
 - `GHL.WebApi` y `GHL.BlazorApp`: capas de presentación. Consumen Application.
