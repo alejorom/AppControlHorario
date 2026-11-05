@@ -21,8 +21,10 @@ context: |
   consulta de jornadas, pausas y perfiles debe filtrar por el usuario autenticado en la
   capa Application (por ejemplo con global query filters de EF Core); nunca confiar en
   que la interfaz oculte datos de otros usuarios.
-  Las credenciales y cadenas de conexión no se guardan en el repositorio (User Secrets o
-  variables de entorno).
+  Nunca se guardan credenciales (contraseñas, claves, tokens) en el repositorio: se usan User
+  Secrets o variables de entorno. La cadena de conexión propia de cada equipo va en User
+  Secrets; appsettings.json solo lleva un valor genérico sin credenciales (LocalDB), igual en
+  GHL.BlazorApp y GHL.WebApi.
   Todos los timestamps se almacenan en UTC (datetime2 o datetimeoffset); la conversión
   a hora local ocurre solo en la UI.
   Las horas trabajadas se calculan siempre como (salida - entrada) - total de pausas.

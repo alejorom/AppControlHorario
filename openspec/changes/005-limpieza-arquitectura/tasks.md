@@ -27,3 +27,15 @@
 - [ ] 5.2 Cambiar la directiva principal de `.agent/rules/buenas-practicas-desarrollo.md` para que exija trabajar con OpenSpec en lugar de maximizar la velocidad ("Vibe"), manteniendo el archivo donde Antigravity lo lee
 - [ ] 5.3 Mantener `.agent/` y `.agents/` (Antigravity) y comprobar que `.github/` y `.claude/` conservan sus propios skills y prompts
 - [ ] 5.4 Verificar que los comandos de OpenSpec funcionan en las herramientas que se usan (VS Code con Copilot o Claude Code; en Visual Studio, la CLI `openspec`)
+
+## 6. Cadena de conexión
+- [ ] 6.1 Dejar en `appsettings.json` de `GHL.BlazorApp` y de `GHL.WebApi` la misma cadena genérica de LocalDB, sin credenciales
+- [ ] 6.2 Mover a User Secrets la cadena propia del equipo (hoy `Server=.` en `GHL.BlazorApp`) con `dotnet user-secrets`
+- [ ] 6.3 Comprobar que ambos proyectos arrancan y se conectan a la misma base de datos
+- [ ] 6.4 Verificar que ningún `appsettings*.json` contiene credenciales ni nombres de servidor propios de un equipo
+
+## 7. README
+- [ ] 7.1 Crear `README.md` en la raíz con descripción, stack, requisitos (SDK de .NET 8 y SQL Server o LocalDB) y estructura de la solución
+- [ ] 7.2 Documentar la configuración de User Secrets y la aplicación de migraciones (`dotnet ef database update --project src/GHL.Infrastructure --startup-project src/GHL.BlazorApp`)
+- [ ] 7.3 Documentar cómo ejecutar la app, el flujo de OpenSpec (`openspec validate --all` y los comandos `/opsx-*`) y el enlace a `AGENTS.md`
+- [ ] 7.4 Seguir los pasos del README desde cero en una carpeta limpia para comprobar que funcionan

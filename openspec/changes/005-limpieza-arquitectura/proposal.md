@@ -9,6 +9,8 @@ La auditoría encontró desviaciones respecto a las reglas del proyecto (`AGENTS
 - `Settings.razor` muestra preferencias (horas por día y por semana, notificaciones) que no se guardan en ningún sitio.
 - Copilot en Visual Studio no lee `AGENTS.md`, por lo que no recibe las reglas del proyecto.
 - La directiva principal de `.agent/rules/buenas-practicas-desarrollo.md` prioriza la velocidad ("Vibe") y contradice el flujo spec-first.
+- `GHL.BlazorApp` usa `Server=.` (SQL Server por defecto de un equipo concreto) y `GHL.WebApi` usa LocalDB, por lo que apuntan a bases distintas; además, la regla de no guardar cadenas de conexión en el repositorio no se cumple.
+- El repositorio es público y no tiene `README.md`.
 - El SRS y `diseño_ux.png` están dentro de `openspec/specs/`, que debe contener solo las capabilities; el SRS todavía describe Supabase y React.
 
 ## What Changes
@@ -18,6 +20,8 @@ La auditoría encontró desviaciones respecto a las reglas del proyecto (`AGENTS
 - Eliminar `NavMenu.razor` y su CSS.
 - Ocultar las preferencias de Settings que no se guardan, hasta que un change propio las especifique.
 - Mover el SRS y la imagen de diseño a `docs/` y marcar el SRS como histórico.
+- Unificar la cadena de conexión (genérica en `appsettings.json`, la propia de cada equipo en User Secrets) y reformular la regla de credenciales en `AGENTS.md`, `config.yaml` y `copilot-instructions.md`.
+- Crear un `README.md` con los pasos para configurar, ejecutar y trabajar con OpenSpec.
 - Crear `.github/copilot-instructions.md` y alinear la directiva principal de la guía de buenas prácticas de Antigravity con el flujo spec-first. Las carpetas de Antigravity se conservan.
 
 ## Impact

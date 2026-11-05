@@ -19,7 +19,7 @@ Aplicación web de control de horarios laborales: solución .NET `GHL` con Blazo
 - Los cambios de esquema se hacen con migraciones de EF Core.
 - Timestamps en UTC; la conversión a hora local ocurre solo en la interfaz.
 - Horas trabajadas = (salida - entrada) - total de pausas.
-- Nunca guardes credenciales ni cadenas de conexión en el repositorio: usa User Secrets o variables de entorno.
+- Nunca guardes credenciales (contraseñas, claves, tokens) en el repositorio: usa User Secrets o variables de entorno. La cadena de conexión propia de cada equipo va en User Secrets; `appsettings.json` solo lleva un valor genérico sin credenciales (LocalDB), igual en `GHL.BlazorApp` y `GHL.WebApi`.
 - No muestres `ex.Message` al usuario: registra la excepción con `ILogger` y muestra un mensaje genérico.
 
 ## Código

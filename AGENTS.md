@@ -46,7 +46,7 @@ Resumen de `.agent/rules/buenas-practicas-desarrollo.md` (versión completa, que
 - Cada usuario solo accede a sus propios registros. Toda consulta de jornadas, pausas y perfiles filtra por el usuario autenticado en la capa Application. Nunca confíes en que la interfaz oculte datos de otros usuarios.
 - Todos los timestamps se guardan en UTC. La conversión a hora local ocurre solo en la interfaz.
 - Las horas trabajadas se calculan siempre como (salida - entrada) - total de pausas.
-- Nunca guardes credenciales ni cadenas de conexión en el repositorio: usa User Secrets o variables de entorno.
+- Nunca guardes credenciales (contraseñas, claves, tokens) en el repositorio: usa User Secrets o variables de entorno. La cadena de conexión propia de cada equipo va en User Secrets; `appsettings.json` solo lleva un valor genérico sin credenciales (LocalDB), igual en `GHL.BlazorApp` y `GHL.WebApi`.
 
 ## Comandos
 
