@@ -7,6 +7,8 @@ La auditoría encontró desviaciones respecto a las reglas del proyecto (`AGENTS
 - `GHL.Domain` depende del paquete de Identity porque `ApplicationUser` hereda de `IdentityUser`, lo que contradice la regla "Domain sin dependencias".
 - `NavMenu.razor` y su CSS son restos de la plantilla de Blazor (enlaces a `counter` y `weather`) que ya no se usan.
 - `Settings.razor` muestra preferencias (horas por día y por semana, notificaciones) que no se guardan en ningún sitio.
+- Copilot en Visual Studio no lee `AGENTS.md`, por lo que no recibe las reglas del proyecto.
+- La directiva principal de `.agent/rules/buenas-practicas-desarrollo.md` prioriza la velocidad ("Vibe") y contradice el flujo spec-first.
 - El SRS y `diseño_ux.png` están dentro de `openspec/specs/`, que debe contener solo las capabilities; el SRS todavía describe Supabase y React.
 
 ## What Changes
@@ -16,6 +18,7 @@ La auditoría encontró desviaciones respecto a las reglas del proyecto (`AGENTS
 - Eliminar `NavMenu.razor` y su CSS.
 - Ocultar las preferencias de Settings que no se guardan, hasta que un change propio las especifique.
 - Mover el SRS y la imagen de diseño a `docs/` y marcar el SRS como histórico.
+- Crear `.github/copilot-instructions.md` y alinear la directiva principal de la guía de buenas prácticas de Antigravity con el flujo spec-first. Las carpetas de Antigravity se conservan.
 
 ## Impact
 - **Specs**: ninguna capability cambia (`skip_specs: true`); es un change de refactor y orden.

@@ -12,6 +12,7 @@ Todo el desarrollo de este proyecto es spec-driven. No se hace desarrollo improv
 - Implementa solo lo que indica el `tasks.md` del change activo y marca cada tarea al terminarla. Si surge trabajo nuevo, detente y actualiza el change antes de continuar.
 - No implementes comportamiento que no esté cubierto por un requirement y un scenario.
 - Las reglas y el contexto detallados del proyecto están en `openspec/config.yaml`. Si algo aquí contradice ese archivo, gana `config.yaml`.
+- Este archivo lo leen Codex, Claude Code (vía `CLAUDE.md`) y GitHub Copilot en VS Code. Copilot en Visual Studio solo lee `.github/copilot-instructions.md`, que resume lo esencial de este archivo: si cambias una regla aquí, actualiza también ese.
 
 ## Arquitectura
 
@@ -26,7 +27,7 @@ La lógica de negocio (cálculo de horas, reglas de jornada y pausas) vive en Do
 
 ## Principios de código
 
-Resumen de `.agent/rules/buenas-practicas-desarrollo.md` (la versión completa, que lee Antigravity), para que apliquen con cualquier asistente. Se aplican siempre dentro de un change de OpenSpec; no sustituyen ni relajan el flujo spec-first.
+Resumen de `.agent/rules/buenas-practicas-desarrollo.md` (versión completa, que lee Antigravity), para que apliquen con cualquier asistente. Se aplican siempre dentro de un change de OpenSpec; no sustituyen ni relajan el flujo spec-first.
 
 - Separación de responsabilidades: la interfaz solo muestra datos; la lógica de negocio no sabe cómo se muestra.
 - Las dependencias externas van detrás de una interfaz; su implementación vive en Infrastructure.

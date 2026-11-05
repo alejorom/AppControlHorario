@@ -21,3 +21,9 @@
 - [ ] 4.3 Crear la carpeta `docs/` y mover a ella el SRS y `diseño_ux.png` desde `openspec/specs/`
 - [ ] 4.4 Agregar al inicio del SRS una nota que indique que es histórico y que la fuente de verdad es `openspec/specs/`
 - [ ] 4.5 Ejecutar `openspec validate --all` y comprobar que sigue pasando
+
+## 5. Herramientas de asistente
+- [ ] 5.1 Crear `.github/copilot-instructions.md` con las reglas esenciales de `AGENTS.md` (Copilot en Visual Studio no lee `AGENTS.md`)
+- [ ] 5.2 Cambiar la directiva principal de `.agent/rules/buenas-practicas-desarrollo.md` para que exija trabajar con OpenSpec en lugar de maximizar la velocidad ("Vibe"), manteniendo el archivo donde Antigravity lo lee
+- [ ] 5.3 Mantener `.agent/` y `.agents/` (Antigravity) y comprobar que `.github/` y `.claude/` conservan sus propios skills y prompts
+- [ ] 5.4 Verificar que los comandos de OpenSpec funcionan en las herramientas que se usan (VS Code con Copilot o Claude Code; en Visual Studio, la CLI `openspec`)
