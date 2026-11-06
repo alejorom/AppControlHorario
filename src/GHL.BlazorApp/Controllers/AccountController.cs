@@ -15,38 +15,66 @@ public class AccountController : Controller
     }
 
     [HttpPost("PerformLogin")]
+    [ValidateAntiForgeryToken]
     public async Task<IActionResult> Login([FromForm] string email, [FromForm] string password, [FromForm] bool rememberMe, [FromForm] string returnUrl = "/")
     {
+        var safeReturnUrl = Url.IsLocalUrl(returnUrl) ? returnUrl : "/";
+        var encodedReturnUrl = Uri.EscapeDataString(safeReturnUrl);
+
         if (string.IsNullOrWhiteSpace(email) || string.IsNullOrWhiteSpace(password))
         {
-            return Redirect($"/Account/Login?error=MissingFields&returnUrl={Uri.EscapeDataString(returnUrl)}");
+            return LocalRedirect($"/Account/Login?error=MissingFields&returnUrl={encodedReturnUrl}");
         }
 
-        var result = await _signInManager.PasswordSignInAsync(email, password, rememberMe, lockoutOnFailure: false);
+        var result = await _signInManager.PasswordSignInAsync(email, password, rememberMe, lockoutOnFailure: true);
         if (result.Succeeded)
         {
-            return Redirect(returnUrl);
+            return LocalRedirect(safeReturnUrl);
         }
-        
-        // If failed, redirect back to login page with error query param
-        return Redirect($"/Account/Login?error=InvalidCredentials&returnUrl={Uri.EscapeDataString(returnUrl)}");
+
+        if (result.IsLockedOut)
+        {
+            return LocalRedirect($"/Account/Login?error=LockedOut&returnUrl={encodedReturnUrl}");
+        }
+
+        if (result.IsNotAllowed && await IsPasswordValidAsync(email, password))
+        {
+            // Only reveal the unconfirmed state after the password is proven correct
+            return LocalRedirect($"/Account/Login?error=EmailNotConfirmed&email={Uri.EscapeDataString(email)}&returnUrl={encodedReturnUrl}");
+        }
+
+        return LocalRedirect($"/Account/Login?error=InvalidCredentials&returnUrl={encodedReturnUrl}");
     }
 
-    [HttpGet("PerformLogout")]
+    [HttpPost("PerformLogout")]
+    [ValidateAntiForgeryToken]
     public async Task<IActionResult> Logout()
     {
         await _signInManager.SignOutAsync();
-        return Redirect("/");
+        return LocalRedirect("/Account/Login");
     }
 
     [HttpGet("RefreshProfile")]
-    public async Task<IActionResult> RefreshProfile([FromServices] UserManager<ApplicationUser> userManager)
+    public async Task<IActionResult> RefreshProfile([FromServices] UserManager<ApplicationUser> userManager, [FromQuery] bool emailPending = false)
     {
         var user = await userManager.GetUserAsync(User);
         if (user != null)
         {
             await _signInManager.RefreshSignInAsync(user);
         }
-        return Redirect("/settings?success=true");
+        return LocalRedirect(emailPending ? "/settings?success=true&emailPending=true" : "/settings?success=true");
+    }
+
+    // PasswordSignInAsync returns NotAllowed before checking the password, so verify it separately
+    private async Task<bool> IsPasswordValidAsync(string email, string password)
+    {
+        var user = await _signInManager.UserManager.FindByEmailAsync(email);
+        if (user is null)
+        {
+            return false;
+        }
+
+        var check = await _signInManager.CheckPasswordSignInAsync(user, password, lockoutOnFailure: true);
+        return check.Succeeded;
     }
 }

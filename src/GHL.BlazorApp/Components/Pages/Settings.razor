@@ -9,6 +9,8 @@
 @inject NavigationManager NavigationManager
 @inject IDialogService DialogService
 @inject IServiceScopeFactory ScopeFactory
+@inject GHL.BlazorApp.Services.Identity.AccountEmailSender AccountEmailSender
+@inject ILogger<Settings> Logger
 
 <PageTitle>Configuración - GHL Control de Horarios</PageTitle>
 
@@ -207,12 +209,20 @@
     
     [SupplyParameterFromQuery]
     public bool? Success { get; set; }
+
+    [SupplyParameterFromQuery]
+    public bool? EmailPending { get; set; }
     
     protected override async Task OnInitializedAsync()
     {
         if (Success == true)
         {
             Snackbar.Add("Perfil actualizado correctamente.", Severity.Success);
+        }
+
+        if (EmailPending == true)
+        {
+            Snackbar.Add("Te enviamos un correo para confirmar el nuevo email. Tu email actual no cambia hasta que lo confirmes.", Severity.Info);
         }
 
         var authState = await AuthStateProvider.GetAuthenticationStateAsync();
@@ -252,28 +262,27 @@
                 return;
             }
 
-            if (_email != _currentUser.Email)
+            var emailChangeRequested = false;
+            if (!string.Equals(_email, _currentUser.Email, StringComparison.OrdinalIgnoreCase))
             {
-                var token = await UserManager.GenerateChangeEmailTokenAsync(_currentUser, _email);
-                var emailResult = await UserManager.ChangeEmailAsync(_currentUser, _email, token);
-                
-                if (emailResult.Succeeded)
+                var existing = await UserManager.FindByEmailAsync(_email);
+                if (existing is not null)
                 {
-                    // Update UserName as well to keep them in sync
-                    await UserManager.SetUserNameAsync(_currentUser, _email);
-                }
-                else
-                {
-                    Snackbar.Add($"Error al actualizar el correo: {string.Join(", ", emailResult.Errors.Select(e => e.Description))}", Severity.Error);
+                    Snackbar.Add("Ese correo ya está en uso.", Severity.Error);
                     return;
                 }
+
+                // The email changes only after the user confirms it from the link sent to the new address
+                await AccountEmailSender.SendChangeEmailAsync(_currentUser, _email);
+                emailChangeRequested = true;
             }
 
-            NavigationManager.NavigateTo("/Account/RefreshProfile", forceLoad: true);
+            NavigationManager.NavigateTo($"/Account/RefreshProfile?emailPending={emailChangeRequested.ToString().ToLowerInvariant()}", forceLoad: true);
         }
         catch (Exception ex)
         {
-            Snackbar.Add($"Ocurrió un error inesperado al guardar: {ex.Message}", Severity.Error);
+            Logger.LogError(ex, "Failed to save profile changes");
+            Snackbar.Add("Ocurrió un error inesperado al guardar. Inténtalo de nuevo más tarde.", Severity.Error);
         }
         finally
         {

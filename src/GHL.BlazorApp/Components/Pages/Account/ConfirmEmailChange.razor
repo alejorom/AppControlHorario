@@ -1,0 +1,91 @@
+@page "/Account/ConfirmEmailChange"
+@using GHL.Domain.Entities
+@using Microsoft.AspNetCore.Identity
+@using GHL.BlazorApp.Components.Layout
+@using GHL.BlazorApp.Services.Identity
+@layout AuthLayout
+@attribute [AllowAnonymous]
+@inject UserManager<ApplicationUser> UserManager
+@inject ILogger<ConfirmEmailChange> Logger
+
+<PageTitle>Confirmar nuevo correo - GHL</PageTitle>
+
+<MudPaper Elevation="0" Class="pa-8" Style="width: 100%; max-width: 420px; border-radius: 32px;">
+    <MudStack AlignItems="AlignItems.Center" Spacing="3">
+        @if (_isLoading)
+        {
+            <MudProgressCircular Indeterminate="true" Color="Color.Primary" />
+            <MudText Typo="Typo.body1">Confirmando tu nuevo correo...</MudText>
+        }
+        else if (_changed)
+        {
+            <MudAlert Severity="Severity.Success" Variant="Variant.Filled">Tu correo fue actualizado. Inicia sesión con el nuevo correo.</MudAlert>
+            <MudLink Href="/Account/Login">Ir a iniciar sesión</MudLink>
+        }
+        else
+        {
+            <MudAlert Severity="Severity.Error" Variant="Variant.Filled">@_error</MudAlert>
+            <MudLink Href="/settings">Ir a configuración</MudLink>
+        }
+    </MudStack>
+</MudPaper>
+
+@code {
+    private bool _isLoading = true;
+    private bool _changed;
+    private string _error = "El enlace no es válido o ha expirado.";
+
+    [SupplyParameterFromQuery(Name = "userId")]
+    public string? UserId { get; set; }
+
+    [SupplyParameterFromQuery(Name = "email")]
+    public string? NewEmail { get; set; }
+
+    [SupplyParameterFromQuery(Name = "code")]
+    public string? Code { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            _changed = await TryChangeAsync();
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Email change confirmation failed");
+            _error = "No pudimos confirmar el cambio de correo. Inténtalo de nuevo más tarde.";
+        }
+        finally
+        {
+            _isLoading = false;
+        }
+    }
+
+    private async Task<bool> TryChangeAsync()
+    {
+        if (string.IsNullOrWhiteSpace(UserId) || string.IsNullOrWhiteSpace(NewEmail) || string.IsNullOrWhiteSpace(Code)) return false;
+
+        var user = await UserManager.FindByIdAsync(UserId);
+        if (user is null) return false;
+
+        // Prerender and the interactive circuit both run this; the second run finds the change already applied
+        if (string.Equals(user.Email, NewEmail, StringComparison.OrdinalIgnoreCase)) return true;
+
+        string token;
+        try
+        {
+            token = AccountEmailSender.Decode(Code);
+        }
+        catch (FormatException)
+        {
+            return false;
+        }
+
+        var result = await UserManager.ChangeEmailAsync(user, NewEmail, token);
+        if (!result.Succeeded) return false;
+
+        // Keep UserName in sync with the email, which is the login identifier
+        var userNameResult = await UserManager.SetUserNameAsync(user, NewEmail);
+        return userNameResult.Succeeded;
+    }
+}

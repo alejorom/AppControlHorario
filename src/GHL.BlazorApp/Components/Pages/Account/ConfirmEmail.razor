@@ -1,0 +1,81 @@
+@page "/Account/ConfirmEmail"
+@using GHL.Domain.Entities
+@using Microsoft.AspNetCore.Identity
+@using GHL.BlazorApp.Components.Layout
+@using GHL.BlazorApp.Services.Identity
+@layout AuthLayout
+@attribute [AllowAnonymous]
+@inject UserManager<ApplicationUser> UserManager
+@inject ILogger<ConfirmEmail> Logger
+
+<PageTitle>Confirmar correo - GHL</PageTitle>
+
+<MudPaper Elevation="0" Class="pa-8" Style="width: 100%; max-width: 420px; border-radius: 32px;">
+    <MudStack AlignItems="AlignItems.Center" Spacing="3">
+        @if (_isLoading)
+        {
+            <MudProgressCircular Indeterminate="true" Color="Color.Primary" />
+            <MudText Typo="Typo.body1">Confirmando tu correo...</MudText>
+        }
+        else if (_confirmed)
+        {
+            <MudAlert Severity="Severity.Success" Variant="Variant.Filled">Tu correo fue confirmado. Ya puedes iniciar sesión.</MudAlert>
+            <MudLink Href="/Account/Login">Ir a iniciar sesión</MudLink>
+        }
+        else
+        {
+            <MudAlert Severity="Severity.Error" Variant="Variant.Filled">@_error</MudAlert>
+            <MudLink Href="/Account/Login">Ir a iniciar sesión</MudLink>
+        }
+    </MudStack>
+</MudPaper>
+
+@code {
+    private bool _isLoading = true;
+    private bool _confirmed;
+    private string _error = "El enlace no es válido o ha expirado.";
+
+    [SupplyParameterFromQuery(Name = "userId")]
+    public string? UserId { get; set; }
+
+    [SupplyParameterFromQuery(Name = "code")]
+    public string? Code { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            _confirmed = await TryConfirmAsync();
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Email confirmation failed");
+            _error = "No pudimos confirmar tu correo. Inténtalo de nuevo más tarde.";
+        }
+        finally
+        {
+            _isLoading = false;
+        }
+    }
+
+    private async Task<bool> TryConfirmAsync()
+    {
+        if (string.IsNullOrWhiteSpace(UserId) || string.IsNullOrWhiteSpace(Code)) return false;
+
+        var user = await UserManager.FindByIdAsync(UserId);
+        if (user is null) return false;
+
+        string token;
+        try
+        {
+            token = AccountEmailSender.Decode(Code);
+        }
+        catch (FormatException)
+        {
+            return false;
+        }
+
+        var result = await UserManager.ConfirmEmailAsync(user, token);
+        return result.Succeeded;
+    }
+}
