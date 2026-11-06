@@ -5,6 +5,7 @@ La auditoría del código encontró riesgos que no pertenecen a una sola capabil
 - `GHL.WebApi` no tiene autenticación y recibe el `userId` en la URL (`/api/sessions/clock-in/{userId}`). Quien pueda alcanzar la API puede leer o modificar las jornadas de cualquier usuario.
 - Las páginas de Blazor no tienen `[Authorize]`; la protección depende de que `MainLayout` redirija al login, lo cual es frágil: una página nueva fuera de ese layout quedaría pública.
 - Varios componentes muestran `ex.Message` al usuario (Register, Settings, Home), lo que filtra detalles internos; otros (History, Statistics) solo escriben en consola y ocultan el error.
+- El login no controla los fallos de base de datos: al ejecutar con SQL Server local sin certificado de confianza, la excepción llega tal cual al usuario.
 - `IWorkSessionRepository.GetByIdAsync` devuelve una sesión sin comprobar a quién pertenece.
 
 ## What Changes

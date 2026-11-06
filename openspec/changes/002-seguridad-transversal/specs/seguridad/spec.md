@@ -47,6 +47,12 @@ El sistema SHALL mostrar al usuario mensajes de error genéricos ante fallos ine
 - **THEN** el sistema muestra al usuario un mensaje genérico de error
 - **AND** registra la excepción completa en el log
 
+#### Scenario: Base de datos no disponible al iniciar sesión
+- **WHEN** un usuario intenta iniciar sesión y el sistema no puede conectarse a la base de datos
+- **THEN** el sistema muestra un mensaje indicando que el servicio no está disponible temporalmente
+- **AND** registra el detalle técnico en el log
+- **AND** no revela el nombre del servidor ni de la base de datos
+
 #### Scenario: Error de regla de negocio
 - **WHEN** el usuario intenta una operación que una regla de negocio no permite, como marcar entrada con una jornada activa
 - **THEN** el sistema muestra el mensaje de esa regla

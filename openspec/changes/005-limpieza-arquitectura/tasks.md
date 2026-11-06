@@ -30,12 +30,13 @@
 
 ## 6. Cadena de conexión
 - [ ] 6.1 Dejar en `appsettings.json` de `GHL.BlazorApp` y de `GHL.WebApi` la misma cadena genérica de LocalDB, sin credenciales
-- [ ] 6.2 Mover a User Secrets la cadena propia del equipo (hoy `Server=.` en `GHL.BlazorApp`) con `dotnet user-secrets`
-- [ ] 6.3 Comprobar que ambos proyectos arrancan y se conectan a la misma base de datos
+- [ ] 6.2 Mover a User Secrets la cadena propia del equipo (hoy `Server=.` en `GHL.BlazorApp`) con `dotnet user-secrets`, agregando `TrustServerCertificate=True` solo para desarrollo
+- [ ] 6.3 Comprobar que ambos proyectos arrancan y se conectan a la misma base de datos, y que la cadena genérica de LocalDB conecta sin errores de certificado; si falla, dejar el ajuste solo en User Secrets o en `appsettings.Development.json`, nunca en producción
 - [ ] 6.4 Verificar que ningún `appsettings*.json` contiene credenciales ni nombres de servidor propios de un equipo
 
 ## 7. README
 - [ ] 7.1 Crear `README.md` en la raíz con descripción, stack, requisitos (SDK de .NET 8 y SQL Server o LocalDB) y estructura de la solución
 - [ ] 7.2 Documentar la configuración de User Secrets y la aplicación de migraciones (`dotnet ef database update --project src/GHL.Infrastructure --startup-project src/GHL.BlazorApp`)
-- [ ] 7.3 Documentar cómo ejecutar la app, el flujo de OpenSpec (`openspec validate --all` y los comandos `/opsx-*`) y el enlace a `AGENTS.md`
-- [ ] 7.4 Seguir los pasos del README desde cero en una carpeta limpia para comprobar que funcionan
+- [ ] 7.3 Documentar el error de certificado de SQL Server ("La cadena de certificación fue emitida por una entidad en la que no se confía"): su causa, que `TrustServerCertificate=True` es solo para desarrollo y que producción requiere un certificado válido
+- [ ] 7.4 Documentar cómo ejecutar la app, el flujo de OpenSpec (`openspec validate --all` y los comandos `/opsx-*`) y el enlace a `AGENTS.md`
+- [ ] 7.5 Seguir los pasos del README desde cero en una carpeta limpia para comprobar que funcionan

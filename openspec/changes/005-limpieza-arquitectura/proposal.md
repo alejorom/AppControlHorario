@@ -10,6 +10,7 @@ La auditoría encontró desviaciones respecto a las reglas del proyecto (`AGENTS
 - Copilot en Visual Studio no lee `AGENTS.md`, por lo que no recibe las reglas del proyecto.
 - La directiva principal de `.agent/rules/buenas-practicas-desarrollo.md` prioriza la velocidad ("Vibe") y contradice el flujo spec-first.
 - `GHL.BlazorApp` usa `Server=.` (SQL Server por defecto de un equipo concreto) y `GHL.WebApi` usa LocalDB, por lo que apuntan a bases distintas; además, la regla de no guardar cadenas de conexión en el repositorio no se cumple.
+- Con `Server=.` la app falla en desarrollo con un error de certificado de SQL Server ("La cadena de certificación fue emitida por una entidad en la que no se confía"), porque la conexión va cifrada por defecto y el certificado local no es de confianza.
 - El repositorio es público y no tiene `README.md`.
 - El SRS y `diseño_ux.png` están dentro de `openspec/specs/`, que debe contener solo las capabilities; el SRS todavía describe Supabase y React.
 

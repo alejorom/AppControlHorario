@@ -23,7 +23,8 @@
 - [ ] 4.1 Reemplazar `ex.Message` por un mensaje genérico en Register, Settings y Home, registrando la excepción con `ILogger`
 - [ ] 4.2 Reemplazar los `Console.WriteLine` de error en History y Statistics por `ILogger` y mostrar un mensaje al usuario
 - [ ] 4.3 Mantener visibles los mensajes de las reglas de negocio de jornadas y pausas
-- [ ] 4.4 Verificar los 2 scenarios de "Mensajes de Error sin Detalles Internos"
+- [ ] 4.4 Capturar en `AccountController` los fallos de acceso a datos durante el login (por ejemplo `SqlException`), registrarlos con `ILogger` y mostrar un mensaje genérico de servicio no disponible, sin nombres de servidor ni de base de datos
+- [ ] 4.5 Verificar los 3 scenarios de "Mensajes de Error sin Detalles Internos", incluido el de base de datos no disponible (por ejemplo, con el servicio de SQL Server detenido)
 
 ## 5. Pruebas
 - [ ] 5.1 Crear el proyecto `tests/GHL.Application.Tests` (xUnit) y agregarlo a `GHL.sln`

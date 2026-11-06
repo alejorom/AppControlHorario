@@ -21,6 +21,7 @@
 
 ### 4. Mensajes de error
 - Los componentes muestran un mensaje genérico al usuario y registran la excepción con `ILogger`. Se eliminan los `Console.WriteLine` de error.
+- El login (`AccountController`) captura los fallos de acceso a datos, como una base de datos inaccesible o un certificado de SQL Server no confiable. Muestra "El servicio no está disponible temporalmente" y registra la excepción. Sin esto, el usuario ve el error crudo en desarrollo o una página genérica en producción sin saber qué ocurrió.
 - Los errores de regla de negocio esperados (por ejemplo "Ya existe una jornada activa") sí se muestran al usuario, porque son mensajes pensados para él y no detalles internos.
 
 ### 5. Pruebas
