@@ -65,16 +65,29 @@ public class AccountController : Controller
         return LocalRedirect(emailPending ? "/settings?success=true&emailPending=true" : "/settings?success=true");
     }
 
-    // PasswordSignInAsync returns NotAllowed before checking the password, so verify it separately
+    // CheckPasswordSignInAsync also enforces confirmed-account and returns NotAllowed, so verify via UserManager and count failures manually
     private async Task<bool> IsPasswordValidAsync(string email, string password)
     {
-        var user = await _signInManager.UserManager.FindByEmailAsync(email);
+        var userManager = _signInManager.UserManager;
+
+        var user = await userManager.FindByEmailAsync(email);
         if (user is null)
         {
             return false;
         }
 
-        var check = await _signInManager.CheckPasswordSignInAsync(user, password, lockoutOnFailure: true);
-        return check.Succeeded;
+        if (await userManager.IsLockedOutAsync(user))
+        {
+            return false;
+        }
+
+        if (await userManager.CheckPasswordAsync(user, password))
+        {
+            await userManager.ResetAccessFailedCountAsync(user);
+            return true;
+        }
+
+        await userManager.AccessFailedAsync(user);
+        return false;
     }
 }
