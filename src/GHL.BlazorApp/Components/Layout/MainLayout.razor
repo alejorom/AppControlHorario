@@ -16,7 +16,11 @@
                 <MudIconButton Icon="@Icons.Material.Filled.Notifications" Style="color: #666;" />
                 
                 <!-- Explicit Logout for visibility -->
-                <MudIconButton Icon="@Icons.Material.Filled.Logout" Color="Color.Error" Href="/Account/PerformLogout" Title="Cerrar Sesión" />
+                <!-- Logout is a POST with antiforgery token; buttons submit this form via the form attribute -->
+                <form id="logout-form" method="post" action="/Account/PerformLogout">
+                    <AntiforgeryToken />
+                </form>
+                <MudIconButton Icon="@Icons.Material.Filled.Logout" Color="Color.Error" ButtonType="ButtonType.Submit" form="logout-form" Title="Cerrar Sesión" />
 
                 <MudMenu AnchorOrigin="Origin.BottomRight" TransformOrigin="Origin.TopRight">
                     <ActivatorContent>
@@ -34,7 +38,9 @@
                         <MudMenuItem Icon="@Icons.Material.Filled.Person">Perfil</MudMenuItem>
                         <MudDivider />
                         <MudMenuItem Icon="@Icons.Material.Filled.Settings" Href="/settings">Configuración</MudMenuItem>
-                        <MudMenuItem Icon="@Icons.Material.Filled.Logout" Href="/Account/PerformLogout" Style="color: #DC2626;">Cerrar Sesión</MudMenuItem>
+                        <MudMenuItem Icon="@Icons.Material.Filled.Logout" Style="color: #DC2626;">
+                            <button type="submit" form="logout-form" class="logout-menu-button">Cerrar Sesión</button>
+                        </MudMenuItem>
                     </ChildContent>
                 </MudMenu>
             </MudAppBar>
@@ -105,6 +111,15 @@
 </AuthorizeView>
 
 <style>
+    .logout-menu-button {
+        background: none;
+        border: none;
+        padding: 0;
+        color: inherit;
+        font: inherit;
+        cursor: pointer;
+    }
+
     .mud-nav-link-active {
         background: transparent !important;
         color: #B7F129 !important; /* Neon Green Siohioma highlight */

@@ -1,6 +1,8 @@
+using GHL.Application.Interfaces;
 using GHL.Domain.Entities;
 using GHL.Domain.Interfaces;
 using GHL.Infrastructure.Data;
+using GHL.Infrastructure.Email;
 using GHL.Infrastructure.Repositories;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -47,6 +49,17 @@ public static class DependencyInjection
         
         services.AddScoped<IUnitOfWork, UnitOfWork>();
         services.AddScoped<IWorkSessionRepository, WorkSessionRepository>();
+
+        var smtpSection = configuration.GetSection(SmtpOptions.SectionName);
+        services.Configure<SmtpOptions>(smtpSection);
+        if (smtpSection.Get<SmtpOptions>()?.IsConfigured == true)
+        {
+            services.AddScoped<IEmailService, SmtpEmailService>();
+        }
+        else
+        {
+            services.AddScoped<IEmailService, LoggingEmailService>();
+        }
         
         return services;
     }

@@ -10,6 +10,8 @@
 @inject UserManager<ApplicationUser> UserManager
 @inject SignInManager<ApplicationUser> SignInManager
 @inject NavigationManager NavigationManager
+@inject GHL.BlazorApp.Services.Identity.AccountEmailSender AccountEmailSender
+@inject ILogger<Register> Logger
 
 <!-- Title -->
 <PageTitle>Registro - GHL</PageTitle>
@@ -300,39 +302,28 @@
 
             if (result.Succeeded)
             {
+                await AccountEmailSender.SendConfirmationAsync(user);
+
                 // Redirect user to login page with success flag
                 NavigationManager.NavigateTo("/Account/Login?registered=true", forceLoad: true);
             }
             else
             {
-                foreach (var error in result.Errors)
+                foreach (var error in result.Errors.Select(GHL.BlazorApp.Services.Identity.IdentityErrorTranslator.Translate).Distinct())
                 {
-                    _errors.Add(TranslateError(error));
+                    _errors.Add(error);
                 }
             }
         }
         catch (Exception ex)
         {
-            _errors.Add($"Error inesperado: {ex.Message}");
+            Logger.LogError(ex, "Registration failed");
+            _errors.Add("Ocurrió un error inesperado. Inténtalo de nuevo más tarde.");
         }
         finally
         {
             _isLoading = false;
         }
-    }
-
-    private string TranslateError(IdentityError error)
-    {
-        return error.Code switch
-        {
-            "DuplicateEmail" => "Este correo ya está registrado.",
-            "PasswordTooShort" => "La contraseña debe tener al menos 8 caracteres.",
-            "PasswordRequiresDigit" => "La contraseña debe incluir al menos un número.",
-            "PasswordRequiresLower" => "La contraseña debe incluir al menos una minúscula.",
-            "PasswordRequiresUpper" => "La contraseña debe incluir al menos una mayúscula.",
-            "PasswordRequiresNonAlphanumeric" => "La contraseña debe incluir al menos un caracter especial (#,$,%,etc).",
-            _ => error.Description
-        };
     }
 
     // Input Model

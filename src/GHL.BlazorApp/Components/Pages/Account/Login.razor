@@ -7,6 +7,9 @@
 @rendermode RenderMode.InteractiveServer
 @attribute [AllowAnonymous]
 @inject NavigationManager NavigationManager
+@inject UserManager<ApplicationUser> UserManager
+@inject GHL.BlazorApp.Services.Identity.AccountEmailSender AccountEmailSender
+@inject ILogger<Login> Logger
 
 <PageTitle>Iniciar Sesión - GHL</PageTitle>
 
@@ -24,19 +27,35 @@
     <!-- Alerts -->
     @if (!string.IsNullOrEmpty(_errorMessage))
     {
-        <MudAlert Severity="Severity.Error" Variant="Variant.Filled" Style="margin-bottom: 24px; border-radius: 12px;">@_errorMessage</MudAlert>
+        <MudAlert Severity="Severity.Error" Variant="Variant.Filled" Style="margin-bottom: 24px; border-radius: 12px;">
+            @_errorMessage
+            @if (_showResend)
+            {
+                <div>
+                    <MudButton Variant="Variant.Text" Color="Color.Inherit" Size="Size.Small" OnClick="ResendConfirmationAsync" Disabled="_isResending">
+                        Reenviar correo de verificación
+                    </MudButton>
+                </div>
+            }
+        </MudAlert>
+    }
+
+    @if (!string.IsNullOrEmpty(_infoMessage))
+    {
+        <MudAlert Severity="Severity.Info" Variant="Variant.Filled" Style="margin-bottom: 24px; border-radius: 12px;">@_infoMessage</MudAlert>
     }
     
     @if (_showSuccessMessage)
     {
         <MudAlert Severity="Severity.Success" Variant="Variant.Filled" Style="margin-bottom: 24px; border-radius: 12px;">
-            ¡Registro exitoso! Por favor inicia sesión.
+            ¡Registro exitoso! Revisa tu correo y confirma tu cuenta para iniciar sesión.
         </MudAlert>
     }
     
     <!-- Actual Form Post to Controller -->
     <!-- We use a standard form to POST to the controller, but style it with MudBlazor -->
     <form action="/Account/PerformLogin" method="post">
+        <AntiforgeryToken />
         <input type="hidden" name="returnUrl" value="@ReturnUrl" />
         <MudStack Spacing="3">
             
@@ -113,12 +132,21 @@
 @code {
     private bool _showSuccessMessage = false;
     private string? _errorMessage;
+    private string? _infoMessage;
+    private bool _showResend;
+    private bool _isResending;
     
     [SupplyParameterFromQuery]
     public string? ReturnUrl { get; set; }
     
     [SupplyParameterFromQuery]
     public string? Registered { get; set; }
+
+    [SupplyParameterFromQuery]
+    public string? Email { get; set; }
+
+    [SupplyParameterFromQuery]
+    public string? Reset { get; set; }
     
     [SupplyParameterFromQuery(Name = "error")]
     public string? ErrorParam { get; set; }
@@ -134,17 +162,58 @@
         {
             _showSuccessMessage = true;
         }
+
+        if (Reset == "true")
+        {
+            _infoMessage = "Contraseña restablecida. Ya puedes iniciar sesión.";
+        }
         
         if (!string.IsNullOrEmpty(ErrorParam))
         {
-            if (ErrorParam == "MissingFields")
+            switch (ErrorParam)
             {
-                _errorMessage = "Por favor, completa todos los campos obligatorios.";
+                case "MissingFields":
+                    _errorMessage = "Por favor, completa todos los campos obligatorios.";
+                    break;
+                case "LockedOut":
+                    _errorMessage = "No se pudo iniciar sesión. Si tus datos son correctos, inténtalo de nuevo más tarde.";
+                    break;
+                case "EmailNotConfirmed":
+                    _errorMessage = "Debes confirmar tu correo electrónico antes de iniciar sesión.";
+                    _showResend = !string.IsNullOrWhiteSpace(Email);
+                    break;
+                default:
+                    _errorMessage = "Correo o contraseña incorrectos.";
+                    break;
             }
-            else
+        }
+    }
+
+    private async Task ResendConfirmationAsync()
+    {
+        if (string.IsNullOrWhiteSpace(Email)) return;
+
+        _isResending = true;
+        try
+        {
+            var user = await UserManager.FindByEmailAsync(Email);
+            if (user is not null && !await UserManager.IsEmailConfirmedAsync(user))
             {
-                _errorMessage = "Correo o contraseña incorrectos.";
+                await AccountEmailSender.SendConfirmationAsync(user);
             }
+
+            _showResend = false;
+            _errorMessage = null;
+            _infoMessage = "Si la cuenta existe y está pendiente de verificación, te enviamos un nuevo correo.";
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Failed to resend confirmation email");
+            _errorMessage = "No pudimos enviar el correo. Inténtalo de nuevo más tarde.";
+        }
+        finally
+        {
+            _isResending = false;
         }
     }
     
